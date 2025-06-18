@@ -6,7 +6,7 @@ import { ID } from 'node-appwrite';
 import { redirect } from 'next/navigation';
 import checkAuth from './checkAuth';
 import checkRoomAvailability from './checkRoomAvailability';
-// import { revalidatePath } from 'next/cache'; // deblochează dacă vrei revalidare
+import { DateTime } from 'luxon';
 
 async function bookRoom(previousState, formData) {
   const sessionCookie = cookies().get('appwrite-session');
@@ -30,24 +30,32 @@ async function bookRoom(previousState, formData) {
     const checkOutTime = formData.get('check_out_time');
     const roomId = formData.get('room_id');
 
-    const checkInDateTime = new Date(`${checkInDate}T${checkInTime}`);
-    const checkOutDateTime = new Date(`${checkOutDate}T${checkOutTime}`);
-    const now = new Date();
+    // Construiește datele cu fus orar explicit
+    const checkInLocal = DateTime.fromISO(`${checkInDate}T${checkInTime}`, {
+      zone: 'Europe/Bucharest',
+    });
+    const checkOutLocal = DateTime.fromISO(`${checkOutDate}T${checkOutTime}`, {
+      zone: 'Europe/Bucharest',
+    });
+
+    const checkInDateTime = checkInLocal.toUTC();
+    const checkOutDateTime = checkOutLocal.toUTC();
+    const now = DateTime.now().setZone('Europe/Bucharest');
 
     // ✅ Validare date
-    if (checkInDateTime < now) {
+    if (checkInLocal < now) {
       return { error: 'Check-in cannot be in the past' };
     }
 
-    if (checkOutDateTime <= checkInDateTime) {
+    if (checkOutLocal <= checkInLocal) {
       return { error: 'Check-out must be after check-in' };
     }
 
     // ✅ Verificare disponibilitate
     const isAvailable = await checkRoomAvailability(
       roomId,
-      checkInDateTime.toISOString(),
-      checkOutDateTime.toISOString()
+      checkInDateTime.toISO(),
+      checkOutDateTime.toISO()
     );
 
     if (!isAvailable) {
@@ -57,8 +65,8 @@ async function bookRoom(previousState, formData) {
     }
 
     const bookingData = {
-      check_in: checkInDateTime.toISOString(),
-      check_out: checkOutDateTime.toISOString(),
+      check_in: checkInDateTime.toISO(),     // Salvezi în UTC
+      check_out: checkOutDateTime.toISO(),
       user_id: user.id,
       room_id: roomId,
     };
@@ -69,9 +77,6 @@ async function bookRoom(previousState, formData) {
       ID.unique(),
       bookingData
     );
-
-    // Revalidare dacă e cazul:
-    // revalidatePath('/bookings', 'layout');
 
     return {
       success: true,
