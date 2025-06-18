@@ -2,7 +2,7 @@ import Link from 'next/link';
 import CancelBookingButton from './CancelBookingButton';
 
 const ReservedRoomCard = ({ booking }) => {
-  const { room_id: room, user_name } = booking;
+  const { room_id: room, userName } = booking;
 
   const formatDate = (dateString) => {
     const date = new Date(dateString);
@@ -24,7 +24,7 @@ const ReservedRoomCard = ({ booking }) => {
       <div>
         <h4 className='text-lg font-semibold'>{room.name}</h4>
         <p className='text-sm text-gray-600'>
-          <strong>Reserved by:</strong> {user_name}
+          <strong>Reserved by:</strong> {userName}
         </p>
         <p className='text-sm text-gray-600'>
           <strong>Check In:</strong> {formatDate(booking.check_in)}
