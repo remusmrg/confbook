@@ -27,7 +27,7 @@ const Header = () => {
 
     if (success) {
       setIsAuthenticated(false);
-      setCurrentUser(null); // 👈 fix pentru bugul cu numele vechi
+      setCurrentUser(null);
       router.push('/login');
     } else {
       toast.error(error);
@@ -37,7 +37,9 @@ const Header = () => {
   return (
     <header className='bg-gray-100'>
       <nav className='mx-auto max-w-7xl px-4 sm:px-6 lg:px-8'>
-        <div className='flex h-16 items-center justify-between'>
+
+        {/* Desktop layout */}
+        <div className='hidden md:flex h-16 items-center justify-between'>
           <div className='flex items-center'>
             <Link href='/'>
               <Image
@@ -47,115 +49,125 @@ const Header = () => {
                 priority={true}
               />
             </Link>
-            <div className='hidden md:block'>
-              <div className='ml-10 flex items-baseline space-x-4'>
-                <Link
-                  href='/'
-                  className='rounded-md px-3 py-2 text-sm font-medium text-gray-800 hover:bg-gray-700 hover:text-white'
-                >
-                  <FaHome className='inline mr-1' /> Rooms
-                </Link>
-                {isAuthenticated && (
-                  <>
-                    <Link
-                      href='/bookings'
-                      className='rounded-md px-3 py-2 text-sm font-medium text-gray-800 hover:bg-gray-700 hover:text-white'
-                    >
-                      <FaCalendarCheck className='inline mr-1' /> Bookings
-                    </Link>
-                    <Link
-                      href='/my-reservations'
-                      className='rounded-md px-3 py-2 text-sm font-medium text-gray-800 hover:bg-gray-700 hover:text-white'
-                    >
-                      <FaClipboardList className='inline mr-1' /> My Reservations
-                    </Link>
-                    <Link
-                      href='/rooms/add'
-                      className='rounded-md px-3 py-2 text-sm font-medium text-gray-800 hover:bg-gray-700 hover:text-white'
-                    >
-                      <FaPlusSquare className='inline mr-1' /> Add Room
-                    </Link>
-                  </>
-                )}
-              </div>
-            </div>
-          </div>
-          <div className='ml-auto'>
-            <div className='ml-4 flex items-center md:ml-6'>
-              {!isAuthenticated && (
-                <>
-                  <Link
-                    href='/login'
-                    className='mr-3 text-gray-800 hover:text-gray-600'
-                  >
-                    <FaSignInAlt className='inline mr-1' /> Login
-                  </Link>
-                  <Link
-                    href='/register'
-                    className='mr-3 text-gray-800 hover:text-gray-600'
-                  >
-                    <FaUser className='inline mr-1' /> Register
-                  </Link>
-                </>
-              )}
-
+            <div className='ml-10 flex items-baseline space-x-4'>
+              <Link
+                href='/'
+                className='rounded-md px-3 py-2 text-sm font-medium text-gray-800 hover:bg-gray-700 hover:text-white'
+              >
+                <FaHome className='inline mr-1' /> Rooms
+              </Link>
               {isAuthenticated && (
                 <>
-                  <span className='mr-4 font-medium text-gray-800'>
-                    <FaUser className='inline mr-1' /> {currentUser?.name || currentUser?.email || 'User'}
-                  </span>
                   <Link
-                    href='/rooms/my'
-                    className='text-gray-800 hover:text-gray-600'
+                    href='/bookings'
+                    className='rounded-md px-3 py-2 text-sm font-medium text-gray-800 hover:bg-gray-700 hover:text-white'
                   >
-                    <FaBuilding className='inline mr-1' /> My Rooms
+                    <FaCalendarCheck className='inline mr-1' /> Bookings
                   </Link>
-                  <button
-                    onClick={handleLogout}
-                    className='mx-3 text-gray-800 hover:text-gray-600'
+                  <Link
+                    href='/my-reservations'
+                    className='rounded-md px-3 py-2 text-sm font-medium text-gray-800 hover:bg-gray-700 hover:text-white'
                   >
-                    <FaSignOutAlt className='inline mr-1' /> Sign Out
-                  </button>
+                    <FaClipboardList className='inline mr-1' /> My Reservations
+                  </Link>
+                  <Link
+                    href='/rooms/add'
+                    className='rounded-md px-3 py-2 text-sm font-medium text-gray-800 hover:bg-gray-700 hover:text-white'
+                  >
+                    <FaPlusSquare className='inline mr-1' /> Add Room
+                  </Link>
                 </>
               )}
             </div>
           </div>
+          <div className='ml-4 flex items-center'>
+            {!isAuthenticated ? (
+              <>
+                <Link
+                  href='/login'
+                  className='mr-3 text-gray-800 hover:text-gray-600'
+                >
+                  <FaSignInAlt className='inline mr-1' /> Login
+                </Link>
+                <Link
+                  href='/register'
+                  className='mr-3 text-gray-800 hover:text-gray-600'
+                >
+                  <FaUser className='inline mr-1' /> Register
+                </Link>
+              </>
+            ) : (
+              <>
+                <span className='mr-4 font-medium text-gray-800'>
+                  <FaUser className='inline mr-1' />
+                  {currentUser?.name || currentUser?.email || 'User'}
+                </span>
+                <Link
+                  href='/rooms/my'
+                  className='text-gray-800 hover:text-gray-600'
+                >
+                  <FaBuilding className='inline mr-1' /> My Rooms
+                </Link>
+                <button
+                  onClick={handleLogout}
+                  className='mx-3 text-gray-800 hover:text-gray-600'
+                >
+                  <FaSignOutAlt className='inline mr-1' /> Sign Out
+                </button>
+              </>
+            )}
+          </div>
         </div>
-      </nav>
 
-      {/* Mobile menu */}
-      <div className='md:hidden'>
-        <div className='space-y-1 px-2 pb-3 pt-2 sm:px-3'>
-          <Link
-            href='/'
-            className='block rounded-md px-3 py-2 text-base font-medium text-gray-800 hover:bg-gray-700 hover:text-white'
-          >
-            <FaHome className='inline mr-1' /> Rooms
+        {/* Mobile layout */}
+        <div className='flex flex-col items-start space-y-3 px-4 py-4 md:hidden'>
+          <div className='flex items-center space-x-3 mb-2'>
+            <Image src={logo} alt='Confbook' width={48} height={48} />
+            {isAuthenticated && (
+              <span className='text-gray-800 font-semibold'>
+                <FaUser className='inline mr-1' />
+                {currentUser?.name || currentUser?.email || 'User'}
+              </span>
+            )}
+          </div>
+
+          <Link href='/' className='text-gray-800 hover:underline'>
+            <FaHome className='inline mr-2' /> Rooms
           </Link>
-          {isAuthenticated && (
+
+          {isAuthenticated ? (
             <>
-              <Link
-                href='/bookings'
-                className='block rounded-md px-3 py-2 text-base font-medium text-gray-800 hover:bg-gray-700 hover:text-white'
-              >
-                <FaCalendarCheck className='inline mr-1' /> Bookings
+              <Link href='/bookings' className='text-gray-800 hover:underline'>
+                <FaCalendarCheck className='inline mr-2' /> Bookings
               </Link>
-              <Link
-                href='/my-reservations'
-                className='block rounded-md px-3 py-2 text-base font-medium text-gray-800 hover:bg-gray-700 hover:text-white'
-              >
-                <FaClipboardList className='inline mr-1' /> My Reservations
+              <Link href='/my-reservations' className='text-gray-800 hover:underline'>
+                <FaClipboardList className='inline mr-2' /> My Reservations
               </Link>
-              <Link
-                href='/rooms/add'
-                className='block rounded-md px-3 py-2 text-base font-medium text-gray-800 hover:bg-gray-700 hover:text-white'
+              <Link href='/rooms/add' className='text-gray-800 hover:underline'>
+                <FaPlusSquare className='inline mr-2' /> Add Room
+              </Link>
+              <Link href='/rooms/my' className='text-gray-800 hover:underline'>
+                <FaBuilding className='inline mr-2' /> My Rooms
+              </Link>
+              <button
+                onClick={handleLogout}
+                className='text-left text-gray-800 hover:underline'
               >
-                <FaPlusSquare className='inline mr-1' /> Add Room
+                <FaSignOutAlt className='inline mr-2' /> Sign Out
+              </button>
+            </>
+          ) : (
+            <>
+              <Link href='/login' className='text-gray-800 hover:underline'>
+                <FaSignInAlt className='inline mr-2' /> Login
+              </Link>
+              <Link href='/register' className='text-gray-800 hover:underline'>
+                <FaUser className='inline mr-2' /> Register
               </Link>
             </>
           )}
         </div>
-      </div>
+      </nav>
     </header>
   );
 };

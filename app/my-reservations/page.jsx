@@ -16,24 +16,24 @@ const MyReservationsPage = async () => {
     <>
       <Heading title='Reservations for My Rooms' />
 
-      {upcoming.length > 0 ? (
-        <>
-          <h2 className='text-lg font-bold mt-4'>Active Reservations</h2>
-          {upcoming.map((booking) => (
+      <div className='mt-4'>
+        <h2 className='text-lg font-bold'>Active Reservations</h2>
+        {upcoming.length > 0 ? (
+          upcoming.map((booking) => (
             <ReservedRoomCard key={booking.$id} booking={booking} />
-          ))}
-        </>
-      ) : (
-        <p>No upcoming reservations.</p>
-      )}
+          ))
+        ) : (
+          <p>No upcoming reservations.</p>
+        )}
+      </div>
 
       {past.length > 0 && (
-        <>
-          <h2 className='text-lg font-bold mt-8'>Past Reservations</h2>
+        <div className='mt-8'>
+          <h2 className='text-lg font-bold'>Past Reservations</h2>
           {past.map((booking) => (
             <ReservedRoomCard key={booking.$id} booking={booking} />
           ))}
-        </>
+        </div>
       )}
     </>
   );

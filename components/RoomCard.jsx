@@ -34,9 +34,9 @@ const RoomCard = ({ room }) => {
             {room.price_per_hour}/hour
           </p>
           <p className='text-sm text-gray-600'>
-  <span className='font-semibold text-gray-800'>Posted by:</span>{' '}
-  {room.postedBy}
-</p>
+            <span className='font-semibold text-gray-800'>Posted by:</span>{' '}
+            {room.postedBy}
+          </p>
            <p className='text-sm text-gray-600'>
             <span className='font-semibold text-gray-800'>Contact:</span>{' '}
             <span>{room.contact}</span>
