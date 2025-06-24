@@ -24,7 +24,7 @@ const ReservedRoomCard = ({ booking }) => {
       <div>
         <h4 className='text-lg font-semibold'>{room.name}</h4>
         <p className='text-sm text-gray-600'>
-          <strong>Rezervat <details></details>:</strong> {userName}
+          <strong>Rezervat de:</strong> {userName}
         </p>
         <p className='text-sm text-gray-600'>
           <strong>Check In:</strong> {formatDate(booking.check_in)}
