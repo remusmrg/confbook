@@ -22,7 +22,7 @@ async function getMyBookings() {
 
     if (!user) {
       return {
-        error: 'You must be logged in to view bookings',
+        error: 'Trebuie să fii autentificat pentru a vedea rezervările.',
       };
     }
 
@@ -35,9 +35,9 @@ async function getMyBookings() {
 
     return bookings;
   } catch (error) {
-    console.log('Failed to get user bookings', error);
+    console.log('Nu s-au putut obține rezervările utilizatorului!', error);
     return {
-      error: 'Failed to get bookings',
+      error: 'Nu s-au putut obține rezervările',
     };
   }
 }

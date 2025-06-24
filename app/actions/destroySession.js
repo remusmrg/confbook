@@ -8,7 +8,7 @@ async function destroySession() {
 
   if (!sessionCookie) {
     return {
-      error: 'No session cookie found',
+      error: 'Niciun cookie de sesiune găsit',
     };
   }
 
@@ -26,7 +26,7 @@ async function destroySession() {
     };
   } catch (error) {
     return {
-      error: 'Error deleting session',
+      error: 'Eroare la ștergerea sesiunii',
     };
   }
 }

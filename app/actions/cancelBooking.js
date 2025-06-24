@@ -20,7 +20,7 @@ async function cancelBooking(bookingId) {
 
     if (!user) {
       return {
-        error: 'You must be logged in to cancel a booking',
+        error: 'Trebuie să fiți logat pentru a anula o rezervare',
       };
     }
 
@@ -34,7 +34,7 @@ async function cancelBooking(bookingId) {
     // Check if booking belongs to current user
     if (booking.user_id !== user.id) {
       return {
-        error: 'You are not authorized to cancel this booking',
+        error: 'Nu sunteți autorizat să anulați această rezervare',
       };
     }
 
@@ -51,9 +51,9 @@ async function cancelBooking(bookingId) {
       success: true,
     };
   } catch (error) {
-    console.log('Failed to cancel booking', error);
+    console.log('Eroare în anularea rezervării', error);
     return {
-      error: 'Failed to cancel booking',
+      error: 'Eroare în anularea rezervării',
     };
   }
 }

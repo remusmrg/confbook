@@ -5,7 +5,7 @@ const Footer = () => {
     <footer className='py-6'>
       <div className='mx-auto max-w-7xl px-4 sm:px-6 lg:px-8'>
         <p className='text-center text-sm text-gray-600'>
-          &copy; {currentYear} Confbook. All rights reserved.
+          &copy; {currentYear} Confbook. Toate drepturile rezervate.
         </p>
       </div>
     </footer>

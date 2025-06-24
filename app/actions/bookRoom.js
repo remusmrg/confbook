@@ -20,7 +20,7 @@ async function bookRoom(previousState, formData) {
 
     if (!user) {
       return {
-        error: 'You must be logged in to book a room',
+        error: 'Trebuie sa fiți autentificat ca să faceți o rezervare.',
       };
     }
 

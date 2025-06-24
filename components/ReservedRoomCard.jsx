@@ -24,7 +24,7 @@ const ReservedRoomCard = ({ booking }) => {
       <div>
         <h4 className='text-lg font-semibold'>{room.name}</h4>
         <p className='text-sm text-gray-600'>
-          <strong>Reserved by:</strong> {userName}
+          <strong>Rezervat <details></details>:</strong> {userName}
         </p>
         <p className='text-sm text-gray-600'>
           <strong>Check In:</strong> {formatDate(booking.check_in)}
@@ -38,7 +38,7 @@ const ReservedRoomCard = ({ booking }) => {
           href={`/rooms/${room.$id}`}
           className='bg-blue-500 text-white px-4 py-2 rounded mb-2 sm:mb-0 w-full sm:w-auto text-center hover:bg-blue-700'
         >
-          View Room
+          Vezi Sala
         </Link>
         {!isPast && (
           <CancelBookingButton bookingId={booking.$id} />

@@ -35,7 +35,7 @@ async function checkRoomAvailability(roomId, checkIn, checkOut) {
       [Query.equal('room_id', roomId)]
     );
 
-    // Loop over bookingsa and check for overlaps
+    // Loop over bookings and check for overlaps
     for (const booking of bookings) {
       const bookingCheckInDateTime = toUTCDateTime(booking.check_in);
       const bookingCheckOutDateTime = toUTCDateTime(booking.check_out);
@@ -55,9 +55,9 @@ async function checkRoomAvailability(roomId, checkIn, checkOut) {
     // No overlap found, continue to book
     return true;
   } catch (error) {
-    console.log('Failed to check availability', error);
+    console.log('Eroare în verificarea disponibilității', error);
     return {
-      error: 'Failed to check availability',
+      error: 'Eroare în verificarea disponibilității',
     };
   }
 }

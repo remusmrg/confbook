@@ -14,7 +14,7 @@ const MyRoomCard = ({ room }) => {
           href={`/rooms/${room.$id}`}
           className='bg-blue-500 text-white px-4 py-2 rounded mb-2 sm:mb-0 w-full sm:w-auto text-center hover:bg-blue-700'
         >
-          <FaEye className='inline mr-1' /> View
+          <FaEye className='inline mr-1' /> Vezi
         </Link>
 
         <DeleteRoomButton roomId={room.$id} />

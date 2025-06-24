@@ -15,14 +15,14 @@ const AddRoomPage = () => {
   useEffect(() => {
     if (state.error) toast.error(state.error);
     if (state.success) {
-      toast.success('Room created successfully!');
+      toast.success('Sală creată cu succes!');
       router.push('/');
     }
   }, [state]);
 
   return (
     <>
-      <Heading title='Add a Room' />
+      <Heading title='Adaugă o sală' />
       <div className='bg-white shadow-lg rounded-lg p-6 w-full'>
         <form action={formAction}>
           <div className='mb-4'>
@@ -37,7 +37,7 @@ const AddRoomPage = () => {
               id='name'
               name='name'
               className='border rounded w-full py-2 px-3'
-              placeholder='Enter a name (Large Conference Room)'
+              placeholder='Introduceți un nume sugestiv (ex. Sală mare de conferințe)'
               required
             />
           </div>
@@ -47,13 +47,13 @@ const AddRoomPage = () => {
               htmlFor='description'
               className='block text-gray-700 font-bold mb-2'
             >
-              Description
+              Descriere
             </label>
             <textarea
               id='description'
               name='description'
               className='border rounded w-full h-24 py-2 px-3'
-              placeholder='Enter a description for the room'
+              placeholder='Introduceți o descriere pentru sală'
               required
             ></textarea>
           </div>
@@ -63,14 +63,14 @@ const AddRoomPage = () => {
               htmlFor='sqm'
               className='block text-gray-700 font-bold mb-2'
             >
-              Square Meters
+              Suprafață
             </label>
             <input
               type='number'
               id='sqm'
               name='sqm'
               className='border rounded w-full py-2 px-3'
-              placeholder='Enter room size in m²'
+              placeholder='Introduceți suprafața în metri pătrați'
               required
             />
           </div>
@@ -80,14 +80,14 @@ const AddRoomPage = () => {
               htmlFor='capacity'
               className='block text-gray-700 font-bold mb-2'
             >
-              Capacity
+              Capacitate
             </label>
             <input
               type='number'
               id='capacity'
               name='capacity'
               className='border rounded w-full py-2 px-3'
-              placeholder='Number of people the room can hold'
+              placeholder='Numărul maxim de persoane pe care sala îi poate acomoda'
               required
             />
           </div>
@@ -97,14 +97,14 @@ const AddRoomPage = () => {
               htmlFor='price_per_hour'
               className='block text-gray-700 font-bold mb-2'
             >
-              Price Per Hour
+              Preț pe oră
             </label>
             <input
               type='number'
               id='price_per_hour'
               name='price_per_hour'
               className='border rounded w-full py-2 px-3'
-              placeholder='Enter price per hour €'
+              placeholder='Introduceți prețul pe oră în lei'
               required
             />
           </div>
@@ -114,14 +114,14 @@ const AddRoomPage = () => {
               htmlFor='address'
               className='block text-gray-700 font-bold mb-2'
             >
-              Address
+              Adresă
             </label>
             <input
               type='text'
               id='address'
               name='address'
               className='border rounded w-full py-2 px-3'
-              placeholder='Enter full address'
+              placeholder='Introduceți'
               required
             />
           </div>
@@ -131,14 +131,14 @@ const AddRoomPage = () => {
               htmlFor='location'
               className='block text-gray-700 font-bold mb-2'
             >
-              Location
+              Completări adresă
             </label>
             <input
               type='text'
               id='location'
               name='location'
               className='border rounded w-full py-2 px-3'
-              placeholder='Location (Building, Floor, Room)'
+              placeholder='Completări la adresă (ex. Clădirea, Corp etc.)'
               required
             />
           </div>
@@ -148,14 +148,14 @@ const AddRoomPage = () => {
               htmlFor='availability'
               className='block text-gray-700 font-bold mb-2'
             >
-              Availability
+              Disponibilitate
             </label>
             <input
               type='text'
               id='availability'
               name='availability'
               className='border rounded w-full py-2 px-3'
-              placeholder='Availability (Monday - Friday, 9am - 5pm)'
+              placeholder='Disponibil Luni-Vineri 10:00-18:00'
               required
             />
           </div>
@@ -165,31 +165,31 @@ const AddRoomPage = () => {
               htmlFor='amenities'
               className='block text-gray-700 font-bold mb-2'
             >
-              Amenities
+              Facilități
             </label>
             <input
               type='text'
               id='amenities'
               name='amenities'
               className='border rounded w-full py-2 px-3'
-              placeholder='Amenities CSV (projector, whiteboard, etc.)'
+              placeholder='Facilitați (Proiector, Tablă, TV etc.)'
               required
             />
           </div>
 
           <div className='mb-4'>
-  <label htmlFor='contact' className='block font-semibold mb-1'>
-    Contact Phone Number
-  </label>
-  <input
-    type='text'
-    name='contact'
-    id='contact'
-    placeholder='07XXXXXXXX'
-    className='w-full border rounded px-3 py-2'
-    required
-  />
-</div>
+            <label htmlFor='contact' className='block font-semibold mb-1'>
+                Număr de telefon
+                  </label>
+                <input
+                    type='text'
+                    name='contact'
+                    id='contact'
+                    placeholder='07XXXXXXXX'
+                    className='w-full border rounded px-3 py-2'
+                    required
+                  />
+                </div>
 
 
           {/* <!-- Image Upload --> */}
@@ -198,7 +198,7 @@ const AddRoomPage = () => {
               htmlFor='image'
               className='block text-gray-700 font-bold mb-2'
             >
-              Image
+              Imagine
             </label>
 
             <input

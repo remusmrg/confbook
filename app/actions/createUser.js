@@ -10,19 +10,19 @@ async function createUser(previousState, formData) {
 
   if (!email || !name || !password) {
     return {
-      error: 'Please fill in all fields',
+      error: 'Va rugăm completați toate câmpurile!',
     };
   }
 
   if (password.length < 8) {
     return {
-      error: 'Password must be at least 8 characters long',
+      error: 'Parola trebuie să fie măcar de 8 caractere lungime!',
     };
   }
 
   if (password !== confirmPassword) {
     return {
-      error: 'Passwords do not match',
+      error: 'Parolele nu sunt identice!',
     };
   }
 
@@ -47,9 +47,9 @@ async function createUser(previousState, formData) {
       success: true,
     };
   } catch (error) {
-    console.log('Registration Error: ', error);
+    console.log('Eroare înregistrare ', error);
     return {
-      error: 'Could not register user',
+      error: 'Nu s-a putut înregistra utilizatorul.',
     };
   }
 }

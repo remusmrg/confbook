@@ -22,19 +22,19 @@ const RoomCard = ({ room }) => {
         <div className='space-y-1'>
           <h4 className='text-lg font-semibold'>{room.name}</h4>
           <p className='text-sm text-gray-600'>
-            <span className='font-semibold text-gray-800'> Address:</span>{' '}
+            <span className='font-semibold text-gray-800'> Adresă:</span>{' '}
             {room.address}
           </p>
           <p className='text-sm text-gray-600'>
-            <span className='font-semibold text-gray-800'>Availability:</span>
+            <span className='font-semibold text-gray-800'>Disponibilitate:</span>
             {room.availability}
           </p>
           <p className='text-sm text-gray-600'>
-            <span className='font-semibold text-gray-800'> Price:</span>€
-            {room.price_per_hour}/hour
+            <span className='font-semibold text-gray-800'> Preț:</span>
+            {room.price_per_hour} lei/oră
           </p>
           <p className='text-sm text-gray-600'>
-            <span className='font-semibold text-gray-800'>Posted by:</span>{' '}
+            <span className='font-semibold text-gray-800'>Postat de:</span>{' '}
             {room.postedBy}
           </p>
            <p className='text-sm text-gray-600'>
@@ -49,7 +49,7 @@ const RoomCard = ({ room }) => {
           href={`/rooms/${room.$id}`}
           className='bg-blue-500 text-white px-4 py-2 rounded mb-2 sm:mb-0 w-full sm:w-auto text-center hover:bg-blue-700'
         >
-          View Room
+          Vezi Sala
         </Link>
       </div>
     </div>

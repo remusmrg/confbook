@@ -25,7 +25,7 @@ const RegisterPage = () => {
       <div className='bg-white shadow-lg rounded-lg p-6 w-full max-w-sm mt-20'>
         <form action={formAction}>
           <h2 className='text-2xl font-bold text-center text-gray-800 mb-6'>
-            Register
+            Înregistrare
           </h2>
 
           <div className='mb-4'>
@@ -33,7 +33,7 @@ const RegisterPage = () => {
               htmlFor='name'
               className='block text-gray-700 font-bold mb-2'
             >
-              Name
+              Nume
             </label>
             <input
               type='text'
@@ -67,7 +67,7 @@ const RegisterPage = () => {
               htmlFor='password'
               className='block text-gray-700 font-bold mb-2'
             >
-              Password
+              Parolă
             </label>
             <input
               type='password'
@@ -84,7 +84,7 @@ const RegisterPage = () => {
               htmlFor='confirm-password'
               className='block text-gray-700 font-bold mb-2'
             >
-              Confirm Password
+              Confirmare parolă
             </label>
             <input
               type='password'
@@ -101,13 +101,13 @@ const RegisterPage = () => {
               type='submit'
               className='bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-700'
             >
-              Register
+              Înregistrare
             </button>
 
             <p>
-              Have an account?
+              Aveți deja cont?
               <Link href='/login' className='text-blue-500'>
-                Login
+                Înregistrare
               </Link>
             </p>
           </div>

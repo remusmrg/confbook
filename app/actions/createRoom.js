@@ -13,7 +13,7 @@ async function createRoom(previousState, formData) {
 
     if (!user) {
       return {
-        error: 'You must be logged in to create a room',
+        error: 'Trebuie să fii logat pentru a lista o sală',
       };
     }
 
@@ -28,9 +28,9 @@ async function createRoom(previousState, formData) {
         const response = await storage.createFile('rooms', ID.unique(), image);
         imageID = response.$id;
       } catch (error) {
-        console.log('Error uploading image', error);
+        console.log('Eroare încărcare imagine', error);
         return {
-          error: 'Error uploading image',
+          error: 'Eroare încărcare imagine',
         };
       }
     } else {

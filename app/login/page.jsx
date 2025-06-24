@@ -22,7 +22,7 @@ const LoginPage = () => {
         const { isAuthenticated, user } = await checkAuth(); // ⬅️ obține info corecte
         setIsAuthenticated(isAuthenticated);
         setCurrentUser(user); // ⬅️ actualizează numele în context
-        toast.success('Logged in successfully!');
+        toast.success('Autentificare reușită!');
         router.push('/');
       }
     };
@@ -35,7 +35,7 @@ const LoginPage = () => {
       <div className='bg-white shadow-lg rounded-lg p-6 w-full max-w-sm mt-20'>
         <form action={formAction}>
           <h2 className='text-2xl font-bold text-center text-gray-800 mb-6'>
-            Login
+            Autentificare
           </h2>
 
           <div className='mb-4'>
@@ -54,7 +54,7 @@ const LoginPage = () => {
 
           <div className='mb-6'>
             <label htmlFor='password' className='block text-gray-700 font-bold mb-2'>
-              Password
+              Parolă
             </label>
             <input
               type='password'
@@ -75,9 +75,9 @@ const LoginPage = () => {
             </button>
 
             <p>
-              No account?{' '}
+              Nu aveți cont?{' '}
               <Link href='/register' className='text-blue-500'>
-                Register
+                Înregistrare
               </Link>
             </p>
           </div>

@@ -29,7 +29,7 @@ async function getMyRooms() {
 
     return rooms;
   } catch (error) {
-    console.log('Failed to get user rooms', error);
+    console.log('Nu s-au putut obține sălile utilizatorului!', error);
     redirect('/error');
   }
 }

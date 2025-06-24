@@ -7,7 +7,7 @@ const CancelBookingButton = ({ bookingId }) => {
   const router = useRouter();
 
   const handleCancelClick = async () => {
-    if (!confirm('Are you sure you want to cancel this booking?')) {
+    if (!confirm('Sunteți sigur că vreți să anulați această rezervare?')) {
       return;
     }
 
@@ -15,14 +15,14 @@ const CancelBookingButton = ({ bookingId }) => {
       const result = await cancelBooking(bookingId);
 
       if (result.success) {
-        toast.success('Booking cancelled successfully!');
+        toast.success('Rezervare anulată cu succes!');
         router.refresh();  // refresh după succes
       } else {
-        toast.error('Failed to cancel booking');
+        toast.error('Anularea rezervării a eșuat!');
       }
     } catch (error) {
-      console.log('Failed to cancel booking', error);
-      toast.error('Failed to cancel booking');
+      console.log('Anularea rezervării a eșuat!', error);
+      toast.error('Anularea rezervării a eșuat!');
     }
   };
 
@@ -31,7 +31,7 @@ const CancelBookingButton = ({ bookingId }) => {
       onClick={handleCancelClick}
       className='bg-red-500 text-white px-4 py-2 rounded w-full sm:w-auto text-center hover:bg-red-700'
     >
-      Cancel Booking
+      Anulează rezervare
     </button>
   );
 };

@@ -48,13 +48,13 @@ async function deleteRoom(roomId) {
       };
     } else {
       return {
-        error: 'Room not found',
+        error: 'Camera nu a fost găsită',
       };
     }
   } catch (error) {
-    console.log('Failed to delete room', error);
+    console.log('Eroare în ștergerea sălii', error);
     return {
-      error: 'Failed to delete room',
+      error: 'Eroare în ștergerea sălii',
     };
   }
 }

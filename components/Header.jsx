@@ -54,7 +54,7 @@ const Header = () => {
                 href='/'
                 className='rounded-md px-3 py-2 text-sm font-medium text-gray-800 hover:bg-gray-700 hover:text-white'
               >
-                <FaHome className='inline mr-1' /> Rooms
+                <FaHome className='inline mr-1' /> Săli
               </Link>
               {isAuthenticated && (
                 <>
@@ -62,19 +62,19 @@ const Header = () => {
                     href='/bookings'
                     className='rounded-md px-3 py-2 text-sm font-medium text-gray-800 hover:bg-gray-700 hover:text-white'
                   >
-                    <FaCalendarCheck className='inline mr-1' /> Bookings
+                    <FaCalendarCheck className='inline mr-1' /> Rezervări
                   </Link>
                   <Link
                     href='/my-reservations'
                     className='rounded-md px-3 py-2 text-sm font-medium text-gray-800 hover:bg-gray-700 hover:text-white'
                   >
-                    <FaClipboardList className='inline mr-1' /> My Reservations
+                    <FaClipboardList className='inline mr-1' /> Rezervări săli
                   </Link>
                   <Link
                     href='/rooms/add'
                     className='rounded-md px-3 py-2 text-sm font-medium text-gray-800 hover:bg-gray-700 hover:text-white'
                   >
-                    <FaPlusSquare className='inline mr-1' /> Add Room
+                    <FaPlusSquare className='inline mr-1' /> Adaugă sală
                   </Link>
                 </>
               )}
@@ -87,13 +87,13 @@ const Header = () => {
                   href='/login'
                   className='mr-3 text-gray-800 hover:text-gray-600'
                 >
-                  <FaSignInAlt className='inline mr-1' /> Login
+                  <FaSignInAlt className='inline mr-1' /> Autentificare
                 </Link>
                 <Link
                   href='/register'
                   className='mr-3 text-gray-800 hover:text-gray-600'
                 >
-                  <FaUser className='inline mr-1' /> Register
+                  <FaUser className='inline mr-1' /> Înregistrare
                 </Link>
               </>
             ) : (
@@ -106,13 +106,13 @@ const Header = () => {
                   href='/rooms/my'
                   className='text-gray-800 hover:text-gray-600'
                 >
-                  <FaBuilding className='inline mr-1' /> My Rooms
+                  <FaBuilding className='inline mr-1' /> Sălile mele
                 </Link>
                 <button
                   onClick={handleLogout}
                   className='mx-3 text-gray-800 hover:text-gray-600'
                 >
-                  <FaSignOutAlt className='inline mr-1' /> Sign Out
+                  <FaSignOutAlt className='inline mr-1' /> Deconectare
                 </button>
               </>
             )}
@@ -132,37 +132,37 @@ const Header = () => {
           </div>
 
           <Link href='/' className='text-gray-800 hover:underline'>
-            <FaHome className='inline mr-2' /> Rooms
+            <FaHome className='inline mr-2' /> Săli
           </Link>
 
           {isAuthenticated ? (
             <>
               <Link href='/bookings' className='text-gray-800 hover:underline'>
-                <FaCalendarCheck className='inline mr-2' /> Bookings
+                <FaCalendarCheck className='inline mr-2' /> Rezervări
               </Link>
               <Link href='/my-reservations' className='text-gray-800 hover:underline'>
-                <FaClipboardList className='inline mr-2' /> My Reservations
+                <FaClipboardList className='inline mr-2' /> Rezervări Săli
               </Link>
               <Link href='/rooms/add' className='text-gray-800 hover:underline'>
-                <FaPlusSquare className='inline mr-2' /> Add Room
+                <FaPlusSquare className='inline mr-2' /> Adaugă sală
               </Link>
               <Link href='/rooms/my' className='text-gray-800 hover:underline'>
-                <FaBuilding className='inline mr-2' /> My Rooms
+                <FaBuilding className='inline mr-2' /> Sălile mele
               </Link>
               <button
                 onClick={handleLogout}
                 className='text-left text-gray-800 hover:underline'
               >
-                <FaSignOutAlt className='inline mr-2' /> Sign Out
+                <FaSignOutAlt className='inline mr-2' /> Ieșiți din cont
               </button>
             </>
           ) : (
             <>
               <Link href='/login' className='text-gray-800 hover:underline'>
-                <FaSignInAlt className='inline mr-2' /> Login
+                <FaSignInAlt className='inline mr-2' /> Autentificare
               </Link>
               <Link href='/register' className='text-gray-800 hover:underline'>
-                <FaUser className='inline mr-2' /> Register
+                <FaUser className='inline mr-2' /> Înregistrare
               </Link>
             </>
           )}

@@ -63,22 +63,25 @@ const RoomPage = async ({ params }) => {
 
             <ul className='space-y-2'>
               <li>
-                <span className='font-semibold text-gray-800'>Size:</span>{' '}
+                <span className='font-semibold text-gray-800'>Suprafață sală:</span>{' '}
                 {room.sqm} m²
               </li>
               <li>
-                <span className='font-semibold text-gray-800'>Availability:</span>{' '}
+                <span className='font-semibold text-gray-800'>Disponibilitate:</span>{' '}
                 {room.availability}
               </li>
               <li>
-                <span className='font-semibold text-gray-800'>Price:</span> €{room.price_per_hour}/hour
+                <span className='font-semibold text-gray-800'>Preț:</span> {room.price_per_hour} lei/oră
               </li>
               <li>
-                <span className='font-semibold text-gray-800'>Address:</span>{' '}
+                <span className='font-semibold text-gray-800'>Facilități:</span> {room.amenities}
+              </li>
+              <li>
+                <span className='font-semibold text-gray-800'>Adresă:</span>{' '}
                 {room.address}
               </li>
               <li>
-                <span className='font-semibold text-gray-800'>Location:</span>{' '}
+                <span className='font-semibold text-gray-800'>Locație:</span>{' '}
                 {room.location}
               </li>
               <li>
@@ -86,7 +89,7 @@ const RoomPage = async ({ params }) => {
                 {room.contact}
               </li>
               <li>
-                <span className='font-semibold text-gray-800'>Posted by:</span>{' '}
+                <span className='font-semibold text-gray-800'>Postat de:</span>{' '}
                 {creator.name} ({creator.email})
               </li>
             </ul>

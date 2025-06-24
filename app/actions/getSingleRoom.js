@@ -20,7 +20,7 @@ async function getSingleRoom(id) {
 
     return room;
   } catch (error) {
-    console.log('Failed to get room', error);
+    console.log('Nu s-a putut obține sala!', error);
     redirect('/error');
   }
 }

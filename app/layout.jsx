@@ -9,8 +9,8 @@ import '@/assets/styles/globals.css';
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata = {
-  title: 'Confbook App | Book a Room',
-  description: 'Book a Conference or conference room for your team',
+  title: 'Confbook App | Rezervă o sală',
+  description: 'Rezervă o sală de conferințe pentru tine sau echipa ta',
   icons:{
     icon:'/favicon.ico',
   },

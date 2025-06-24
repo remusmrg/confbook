@@ -8,7 +8,7 @@ async function createSession(previousState, formData) {
 
   if (!email || !password) {
     return {
-      error: 'Please fill out all fields',
+      error: 'Vă rugăm completați toate câmpurile!',
     };
   }
 
@@ -32,9 +32,9 @@ async function createSession(previousState, formData) {
       success: true,
     };
   } catch (error) {
-    console.log('Authentication Error: ', error);
+    console.log('Eroare autentificare ', error);
     return {
-      error: 'Invalid Credentials',
+      error: 'Date de autentificare invalide',
     };
   }
 }
