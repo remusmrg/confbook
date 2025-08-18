@@ -46,7 +46,7 @@ const RoomPage = async ({ params }) => {
           className='flex items-center text-gray-600 hover:text-gray-800 mb-4'
         >
           <FaChevronLeft className='inline mr-1' />
-          <span className='ml-2'>Înapoi la să<li></li></span>
+          <span className='ml-2'>Înapoi la săli</span>
         </Link>
 
         <div className='flex flex-col sm:flex-row sm:space-x-6'>
