@@ -107,7 +107,7 @@ const RegisterPage = () => {
             <p>
               Aveți deja cont?
               <Link href='/login' className='text-blue-500'>
-                Înregistrare
+                Autentificare
               </Link>
             </p>
           </div>
