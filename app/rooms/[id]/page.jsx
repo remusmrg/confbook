@@ -67,6 +67,10 @@ const RoomPage = async ({ params }) => {
                 {room.sqm} m²
               </li>
               <li>
+                <span className='font-semibold text-gray-800'>Capacitate:</span>{' '}
+                {room.sqm} persoane
+              </li>
+              <li>
                 <span className='font-semibold text-gray-800'>Disponibilitate:</span>{' '}
                 {room.availability}
               </li>

@@ -34,6 +34,10 @@ const RoomCard = ({ room }) => {
             {room.price_per_hour} lei/oră
           </p>
           <p className='text-sm text-gray-600'>
+            <span className='font-semibold text-gray-800'> Capacitate:</span>
+            {room.capacity} persoane
+          </p>
+          <p className='text-sm text-gray-600'>
             <span className='font-semibold text-gray-800'>Postat de:</span>{' '}
             {room.postedBy}
           </p>
