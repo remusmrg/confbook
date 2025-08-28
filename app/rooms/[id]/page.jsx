@@ -1,5 +1,6 @@
 import Heading from '@/components/Heading';
 import BookingForm from '@/components/BookingForm';
+import AvailabilityDisplay from '@/components/AvailabilityDisplay';
 import Image from 'next/image';
 import Link from 'next/link';
 import { FaChevronLeft } from 'react-icons/fa';
@@ -14,7 +15,7 @@ const RoomPage = async ({ params }) => {
   const room = await getSingleRoom(id);
 
   if (!room) {
-    return <Heading title='Room Not Found' />;
+    return <Heading title='Sala nu a fost găsită' />;
   }
 
   // ✅ Get creator info
@@ -43,7 +44,7 @@ const RoomPage = async ({ params }) => {
       <div className='bg-white shadow rounded-lg p-6'>
         <Link
           href='/'
-          className='flex items-center text-gray-600 hover:text-gray-800 mb-4'
+          className='flex items-center text-gray-600 hover:text-gray-800 mb-4 transition-colors'
         >
           <FaChevronLeft className='inline mr-1' />
           <span className='ml-2'>Înapoi la săli</span>
@@ -54,49 +55,54 @@ const RoomPage = async ({ params }) => {
             src={imageSrc}
             alt={room.name}
             width={400}
-            height={100}
+            height={300}
             className='w-full sm:w-1/3 h-64 object-cover rounded-lg'
           />
 
           <div className='mt-4 sm:mt-0 sm:flex-1'>
             <p className='text-gray-600 mb-4'>{room.description}</p>
 
-            <ul className='space-y-2'>
-              <li>
+            <div className='space-y-3'>
+              <div>
                 <span className='font-semibold text-gray-800'>Suprafață sală:</span>{' '}
                 {room.sqm} m²
-              </li>
-              <li>
+              </div>
+              <div>
                 <span className='font-semibold text-gray-800'>Capacitate:</span>{' '}
-                {room.sqm} persoane
-              </li>
-              <li>
-                <span className='font-semibold text-gray-800'>Disponibilitate:</span>{' '}
-                {room.availability}
-              </li>
-              <li>
-                <span className='font-semibold text-gray-800'>Preț:</span> {room.price_per_hour} lei/oră
-              </li>
-              <li>
-                <span className='font-semibold text-gray-800'>Facilități:</span> {room.amenities}
-              </li>
-              <li>
+                {room.capacity} persoane
+              </div>
+              
+              {/* Afișarea disponibilității cu noua componentă */}
+              <AvailabilityDisplay 
+                availabilityString={room.availability}
+                className="py-2 px-3 bg-blue-50 rounded-lg"
+              />
+              
+              <div>
+                <span className='font-semibold text-gray-800'>Preț:</span>{' '}
+                {room.price_per_hour} lei/oră
+              </div>
+              <div>
+                <span className='font-semibold text-gray-800'>Facilități:</span>{' '}
+                {room.amenities}
+              </div>
+              <div>
                 <span className='font-semibold text-gray-800'>Adresă:</span>{' '}
                 {room.address}
-              </li>
-              <li>
+              </div>
+              <div>
                 <span className='font-semibold text-gray-800'>Locație:</span>{' '}
                 {room.location}
-              </li>
-              <li>
+              </div>
+              <div>
                 <span className='font-semibold text-gray-800'>Contact:</span>{' '}
                 {room.contact}
-              </li>
-              <li>
+              </div>
+              <div>
                 <span className='font-semibold text-gray-800'>Postat de:</span>{' '}
                 {creator.name} ({creator.email})
-              </li>
-            </ul>
+              </div>
+            </div>
           </div>
         </div>
 
