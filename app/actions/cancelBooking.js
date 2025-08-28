@@ -31,12 +31,14 @@ async function cancelBooking(bookingId) {
       bookingId
     );
 
-    // Check if booking belongs to current user
-    if (booking.user_id !== user.id) {
-      return {
-        error: 'Nu sunteți autorizat să anulați această rezervare',
-      };
-    }
+  
+
+    // // Check if booking belongs to current user
+    // if (booking.user_id !== user.id) {
+    //   return {
+    //     error: 'Nu sunteți autorizat să anulați această rezervare',
+    //   };
+    // }
 
     // Delete booking
     await databases.deleteDocument(
