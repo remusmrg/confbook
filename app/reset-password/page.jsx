@@ -1,23 +1,19 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useActionState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { toast } from 'react-toastify';
 import Link from 'next/link';
 import resetPassword from '@/app/actions/resetPassword';
 
-const ResetPasswordPage = () => {
+// Componentă pentru conținutul cu searchParams
+const ResetPasswordContent = () => {
   const [state, formAction] = useActionState(resetPassword, {});
-  const [mounted, setMounted] = useState(false);
   const searchParams = useSearchParams();
   const router = useRouter();
   
   const userId = searchParams.get('userId');
   const secret = searchParams.get('secret');
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
   useEffect(() => {
     if (state.error) {
@@ -31,10 +27,6 @@ const ResetPasswordPage = () => {
       }, 2000);
     }
   }, [state, router]);
-
-  if (!mounted) {
-    return <div>Se încarcă...</div>;
-  }
 
   if (!userId || !secret) {
     return (
@@ -135,6 +127,22 @@ const ResetPasswordPage = () => {
         )}
       </div>
     </div>
+  );
+};
+
+// Loading fallback pentru Suspense
+const LoadingFallback = () => (
+  <div className='flex items-center justify-center min-h-screen'>
+    <div>Se încarcă...</div>
+  </div>
+);
+
+// Main component cu Suspense
+const ResetPasswordPage = () => {
+  return (
+    <Suspense fallback={<LoadingFallback />}>
+      <ResetPasswordContent />
+    </Suspense>
   );
 };
 
