@@ -13,8 +13,8 @@ async function requestPasswordReset(previousState, formData) {
   try {
     const { account } = await createAdminClient();
     
-    // Folosește NEXT_PUBLIC_URL în loc de NEXT_PUBLIC_APP_URL
-    const resetUrl = `${process.env.NEXT_PUBLIC_URL || 'http://localhost:3000'}/reset-password`;
+    // Folosește NEXT_PUBLIC_URL (variabila ta existentă)
+    const resetUrl = `${process.env.NEXT_PUBLIC_URL || 'http://localhost:3000/'}reset-password`;
     
     // DEBUG: Log pentru verificare (poți să ștergi după ce merge)
     console.log('Reset URL folosit:', resetUrl);
