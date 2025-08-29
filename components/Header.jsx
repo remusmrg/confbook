@@ -26,6 +26,7 @@ const Header = () => {
   const router = useRouter();
   const { isAuthenticated, setIsAuthenticated, currentUser, setCurrentUser, isAdmin } = useAuth();
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const handleLogout = async () => {
     const { success, error } = await destroySession();
@@ -34,15 +35,12 @@ const Header = () => {
       setIsAuthenticated(false);
       setCurrentUser(null);
       setDropdownOpen(false);
+      setMobileMenuOpen(false);
       toast.success('V-ați deconectat cu succes');
       router.push('/login');
     } else {
       toast.error(error);
     }
-  };
-
-  const closeDropdown = () => {
-    setDropdownOpen(false);
   };
 
   return (
@@ -142,7 +140,6 @@ const Header = () => {
                     {/* Menu items */}
                     <Link
                       href='/account'
-                      onClick={closeDropdown}
                       className='flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors'
                     >
                       <FaCog className='mr-3' />
@@ -151,7 +148,6 @@ const Header = () => {
 
                     <Link
                       href='/rooms/my'
-                      onClick={closeDropdown}
                       className='flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors'
                     >
                       <FaBuilding className='mr-3' />
@@ -162,7 +158,6 @@ const Header = () => {
                     {isAdmin && (
                       <Link
                         href='/admin'
-                        onClick={closeDropdown}
                         className='flex items-center px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors'
                       >
                         <FaUserShield className='mr-3' />
@@ -187,10 +182,13 @@ const Header = () => {
         </div>
 
         {/* Mobile layout */}
-        <div className='flex flex-col items-start space-y-3 px-4 py-4 md:hidden'>
+        <div className='md:hidden py-4'>
+          {/* Header cu logo și toggle */}
           <div className='flex items-center justify-between w-full'>
             <div className='flex items-center space-x-3'>
-              <Image src={logo} alt='Confbook' width={48} height={48} />
+              <Link href='/'>
+                <Image src={logo} alt='Confbook' width={48} height={48} />
+              </Link>
               {isAuthenticated && (
                 <span className='text-gray-800 font-semibold'>
                   <FaUser className='inline mr-1' />
@@ -200,87 +198,95 @@ const Header = () => {
               )}
             </div>
             
-            {isAuthenticated && (
-              <button
-                onClick={() => setDropdownOpen(!dropdownOpen)}
-                className='text-gray-800 hover:text-gray-600'
-              >
-                <FaChevronDown className={`transition-transform ${dropdownOpen ? 'rotate-180' : ''}`} />
-              </button>
-            )}
+            {/* Toggle button pentru meniul mobil */}
+            <button
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className='text-gray-800 hover:text-gray-600 p-2'
+            >
+              <FaChevronDown className={`transition-transform ${mobileMenuOpen ? 'rotate-180' : ''}`} />
+            </button>
           </div>
 
-          <Link href='/' className='text-gray-800 hover:underline'>
-            <FaHome className='inline mr-2' /> Săli
-          </Link>
+          {/* Meniul mobil */}
+          {mobileMenuOpen && (
+            <div className='mt-4 space-y-3 border-t border-gray-200 pt-4'>
+              <Link 
+                href='/' 
+                className='block text-gray-800 hover:underline py-2'
+              >
+                <FaHome className='inline mr-2' /> Săli
+              </Link>
 
-          {isAuthenticated ? (
-            <>
-              <Link href='/bookings' className='text-gray-800 hover:underline'>
-                <FaCalendarCheck className='inline mr-2' /> Rezervări
-              </Link>
-              <Link href='/my-reservations' className='text-gray-800 hover:underline'>
-                <FaClipboardList className='inline mr-2' /> Rezervări Săli
-              </Link>
-              <Link href='/rooms/add' className='text-gray-800 hover:underline'>
-                <FaPlusSquare className='inline mr-2' /> Adaugă sală
-              </Link>
-              <Link href='/rooms/my' className='text-gray-800 hover:underline'>
-                <FaBuilding className='inline mr-2' /> Sălile mele
-              </Link>
-              
-              <Link href='/account' className='text-gray-800 hover:underline'>
-                <FaCog className='inline mr-2' /> Contul meu
-              </Link>
-              
-              {/* Admin link pentru mobile */}
-              {isAdmin && (
-                <Link href='/admin' className='text-red-600 hover:underline'>
-                  <FaUserShield className='inline mr-2' /> Panou administrativ
-                </Link>
-              )}
-              
-              {/* Mobile dropdown content */}
-              {dropdownOpen && (
-                <div className='w-full bg-gray-50 rounded-lg p-3 space-y-2'>
-                  <p className='text-sm text-gray-600 font-medium'>Opțiuni suplimentare:</p>
+              {isAuthenticated ? (
+                <>
+                  <Link 
+                    href='/bookings' 
+                    className='block text-gray-800 hover:underline py-2'
+                  >
+                    <FaCalendarCheck className='inline mr-2' /> Rezervări
+                  </Link>
+                  <Link 
+                    href='/my-reservations' 
+                    className='block text-gray-800 hover:underline py-2'
+                  >
+                    <FaClipboardList className='inline mr-2' /> Rezervări Săli
+                  </Link>
+                  <Link 
+                    href='/rooms/add' 
+                    className='block text-gray-800 hover:underline py-2'
+                  >
+                    <FaPlusSquare className='inline mr-2' /> Adaugă sală
+                  </Link>
+                  <Link 
+                    href='/rooms/my' 
+                    className='block text-gray-800 hover:underline py-2'
+                  >
+                    <FaBuilding className='inline mr-2' /> Sălile mele
+                  </Link>
+                  
                   <Link 
                     href='/account' 
-                    onClick={closeDropdown}
-                    className='block text-blue-600 hover:underline text-sm'
+                    className='block text-gray-800 hover:underline py-2'
                   >
-                    <FaCog className='inline mr-2' /> Setări avansate cont
+                    <FaCog className='inline mr-2' /> Contul meu
                   </Link>
-                </div>
+                  
+                  {isAdmin && (
+                    <Link 
+                      href='/admin' 
+                      className='block text-red-600 hover:underline py-2'
+                    >
+                      <FaUserShield className='inline mr-2' /> Panou administrativ
+                    </Link>
+                  )}
+                  
+                  <button
+                    onClick={handleLogout}
+                    className='block text-left text-red-600 hover:underline py-2 w-full'
+                  >
+                    <FaSignOutAlt className='inline mr-2' /> Deconectare
+                  </button>
+                </>
+              ) : (
+                <>
+                  <Link 
+                    href='/login' 
+                    className='block text-gray-800 hover:underline py-2'
+                  >
+                    <FaSignInAlt className='inline mr-2' /> Autentificare
+                  </Link>
+                  <Link 
+                    href='/register' 
+                    className='block text-gray-800 hover:underline py-2'
+                  >
+                    <FaUser className='inline mr-2' /> Înregistrare
+                  </Link>
+                </>
               )}
-              
-              <button
-                onClick={handleLogout}
-                className='text-left text-red-600 hover:underline'
-              >
-                <FaSignOutAlt className='inline mr-2' /> Deconectare
-              </button>
-            </>
-          ) : (
-            <>
-              <Link href='/login' className='text-gray-800 hover:underline'>
-                <FaSignInAlt className='inline mr-2' /> Autentificare
-              </Link>
-              <Link href='/register' className='text-gray-800 hover:underline'>
-                <FaUser className='inline mr-2' /> Înregistrare
-              </Link>
-            </>
+            </div>
           )}
         </div>
       </nav>
-
-      {/* Overlay for closing dropdown on mobile */}
-      {dropdownOpen && (
-        <div 
-          className='fixed inset-0 z-40'
-          onClick={closeDropdown}
-        />
-      )}
     </header>
   );
 };
