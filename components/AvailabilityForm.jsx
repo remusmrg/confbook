@@ -10,13 +10,22 @@ const DAYS = [
   { value: 4, label: 'Joi' },
   { value: 5, label: 'Vineri' },
   { value: 6, label: 'Sâmbătă' },
-  { value: 0, label: 'Duminică' }
+  { value: 7, label: 'Duminică' }
 ];
+
+const DAYS_REVERSE_MAP = {
+  1: 'luni',
+  2: 'marți',
+  3: 'miercuri',
+  4: 'joi',
+  5: 'vineri',
+  6: 'sâmbătă',
+  7: 'duminică'
+};
 
 const AvailabilityForm = ({ initialValue = '', onChange }) => {
   const [schedules, setSchedules] = useState(() => {
     if (initialValue) {
-      // Încearcă să parseze valoarea inițială
       try {
         return parseExistingAvailability(initialValue);
       } catch {
@@ -28,14 +37,11 @@ const AvailabilityForm = ({ initialValue = '', onChange }) => {
 
   const [showHelp, setShowHelp] = useState(false);
 
-  // Funcție pentru parsarea disponibilității existente
   function parseExistingAvailability(availString) {
-    // Implementare simplă - în practică ar trebui să folosești parseAvailability din utils
-    // Pentru moment, returnăm un program standard
+    // momentan dummy, poți implementa parser real
     return [{ days: [1, 2, 3, 4, 5], startTime: '09:00', endTime: '18:00' }];
   }
 
-  // Actualizează valoarea pentru form
   const updateFormValue = (newSchedules) => {
     const availabilityString = formatSchedulesToString(newSchedules);
     if (onChange) {
@@ -43,36 +49,45 @@ const AvailabilityForm = ({ initialValue = '', onChange }) => {
     }
   };
 
-  // Formatează programele într-un string
   const formatSchedulesToString = (schedules) => {
     return schedules.map(schedule => {
-      const dayNames = schedule.days.sort((a, b) => a - b).map(dayNum => {
-        const day = DAYS.find(d => d.value === dayNum);
-        return day ? day.label.toLowerCase() : '';
-      });
-      
-      // Creează intervale de zile consecutive
+      const uniqueDays = [...new Set(schedule.days)].sort((a, b) => a - b);
       const ranges = [];
       let i = 0;
-      while (i < schedule.days.length) {
+
+      while (i < uniqueDays.length) {
         let start = i;
         let end = i;
-        
-        // Găsește sfârșitul intervalului consecutiv
-        while (end + 1 < schedule.days.length && 
-               schedule.days[end + 1] === schedule.days[end] + 1) {
+
+        while (
+          end + 1 < uniqueDays.length &&
+          uniqueDays[end + 1] === uniqueDays[end] + 1
+        ) {
           end++;
         }
-        
-        if (start === end) {
-          ranges.push(dayNames[start]);
+
+        const startDay = uniqueDays[start];
+        const endDay = uniqueDays[end];
+
+        if (end > start) {
+          // interval de mai multe zile
+          if (uniqueDays.length === 7 && startDay === 1 && endDay === 7) {
+            ranges.push('luni-duminică');
+          } else if (startDay === 1 && endDay === 5) {
+            ranges.push('luni-vineri');
+          } else if (startDay === 6 && endDay === 7 && uniqueDays.length === 2) {
+            ranges.push('sâmbătă-duminică');
+          } else {
+            ranges.push(`${DAYS_REVERSE_MAP[startDay]}-${DAYS_REVERSE_MAP[endDay]}`);
+          }
         } else {
-          ranges.push(`${dayNames[start]}-${dayNames[end]}`);
+          // zi singulară
+          ranges.push(DAYS_REVERSE_MAP[startDay]);
         }
-        
+
         i = end + 1;
       }
-      
+
       return `${ranges.join(', ')} ${schedule.startTime}-${schedule.endTime}`;
     }).join(', ');
   };
@@ -105,7 +120,7 @@ const AvailabilityForm = ({ initialValue = '', onChange }) => {
     const newDays = schedule.days.includes(dayValue)
       ? schedule.days.filter(d => d !== dayValue)
       : [...schedule.days, dayValue].sort((a, b) => a - b);
-    
+
     updateSchedule(scheduleIndex, 'days', newDays);
   };
 

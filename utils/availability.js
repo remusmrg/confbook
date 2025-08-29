@@ -18,8 +18,8 @@ const DAYS_MAP = {
   'sambata': 6,
   'sâmbătă': 6, // cu diacritice
   'simbata': 6, // fără diacritice alternativ
-  'duminica': 0,
-  'duminică': 0 // cu diacritice
+  'duminica': 7,
+  'duminică': 7 // cu diacritice
 };
 
 const DAYS_REVERSE_MAP = {
@@ -29,7 +29,7 @@ const DAYS_REVERSE_MAP = {
   4: 'joi',
   5: 'vineri',
   6: 'sâmbătă',
-  0: 'duminică'
+  7: 'duminică'
 };
 
 /**
@@ -43,6 +43,14 @@ function normalizeDay(day) {
     .replace(/î/g, 'i')
     .replace(/ș/g, 's')
     .replace(/ț/g, 't');
+}
+
+/**
+ * Convertește ziua din sistemul JavaScript (0=duminică) în sistemul european (1=luni)
+ */
+function getEuropeanDayFromDate(date) {
+  const jsDay = date.getDay();
+  return jsDay === 0 ? 7 : jsDay;
 }
 
 /**
@@ -71,13 +79,11 @@ function parseDayRange(dayRange) {
         days.push(i);
       }
     } else {
-      // Cazul când intervalul trece peste weekend (ex: vineri-luni)
-      for (let i = startDay; i <= 6; i++) days.push(i);
-      for (let i = 0; i <= endDay; i++) days.push(i);
+      for (let i = startDay; i <= 7; i++) days.push(i);
+      for (let i = 1; i <= endDay; i++) days.push(i);
     }
     return days;
   } else if (range.includes(',')) {
-    // Format: "luni,miercuri,vineri"
     return range.split(',').map(day => {
       const normalizedDay = normalizeDay(day);
       const dayNum = DAYS_MAP[normalizedDay];
@@ -87,7 +93,6 @@ function parseDayRange(dayRange) {
       return dayNum;
     });
   } else {
-    // O singură zi
     const normalizedRange = normalizeDay(range);
     const dayNum = DAYS_MAP[normalizedRange];
     if (dayNum === undefined) {
@@ -117,7 +122,6 @@ function parseTimeRange(timeRange) {
  * Splitează string-ul de disponibilitate în segmente, fiind atent la virgulele din intervale
  */
 function smartSplitAvailability(availabilityString) {
-  // Strategie simplă: split după pattern de timp urmat de virgulă și spațiu
   const segments = [];
   const parts = availabilityString.split(/(?<=\d{2}:\d{2})\s*,\s*(?=\w)/);
   
@@ -139,39 +143,24 @@ export function parseAvailability(availabilityString) {
   }
   
   try {
-    // Folosește funcția de split inteligentă
     const segments = smartSplitAvailability(availabilityString);
     const availability = [];
-    
-    console.log('String original:', availabilityString); // Debug
-    console.log('Segmente detectate:', segments); // Debug
     
     for (const segment of segments) {
       if (!segment.trim()) continue;
       
-      // Găsește ultimul interval orar din segment folosind regex mai strict
       const timeMatch = segment.match(/\s(\d{1,2}:\d{2}-\d{1,2}:\d{2})$/);
       if (!timeMatch) {
-        console.warn(`Segment fără format orar valid: "${segment}"`);
         continue;
       }
       
       const timeRange = timeMatch[1];
-      const daysPart = segment.replace(timeMatch[0], '').trim(); // Înlătură spațiul și timpul
+      const daysPart = segment.replace(timeMatch[0], '').trim();
       
-      console.log(`Procesez segment: "${segment}"`); // Debug
-      console.log(`-> Zile: "${daysPart}"`); // Debug 
-      console.log(`-> Timp: "${timeRange}"`); // Debug
-      
-      if (!daysPart) {
-        console.warn(`Nu s-au găsit zile în segmentul: "${segment}"`);
-        continue;
-      }
+      if (!daysPart) continue;
       
       const days = parseDayRange(daysPart);
       const time = parseTimeRange(timeRange);
-      
-      console.log(`Zile parsate:`, days); // Debug
       
       for (const day of days) {
         availability.push({
@@ -184,12 +173,10 @@ export function parseAvailability(availabilityString) {
       }
     }
     
-    console.log('Disponibilitate finală:', availability); // Debug
     return availability;
   } catch (error) {
     console.error('Eroare la parsarea disponibilității:', error);
-    console.error('String-ul problematic:', availabilityString);
-    return []; // Returnează array gol în caz de eroare
+    return [];
   }
 }
 
@@ -198,38 +185,22 @@ export function parseAvailability(availabilityString) {
  */
 export function isBookingWithinAvailability(checkInDate, checkOutDate, availability) {
   if (!availability || availability.length === 0) {
-    // Dacă nu există restricții de disponibilitate, permite orice rezervare
     return { isValid: true };
   }
   
   const checkIn = new Date(checkInDate);
   const checkOut = new Date(checkOutDate);
   
-  console.log('Verificare disponibilitate:', {
-    checkIn: checkIn.toString(),
-    checkOut: checkOut.toString(),
-    availability
-  });
-  
-  // Verifică dacă rezervarea este în aceeași zi
   const sameDay = checkIn.toDateString() === checkOut.toDateString();
   
   if (sameDay) {
-    // Rezervare într-o singură zi
-    const dayOfWeek = checkIn.getDay();
+    const dayOfWeek = getEuropeanDayFromDate(checkIn);
     const startHour = checkIn.getHours();
     const startMinute = checkIn.getMinutes();
     const endHour = checkOut.getHours();
     const endMinute = checkOut.getMinutes();
     
-    console.log(`Rezervare într-o singură zi: ${DAYS_REVERSE_MAP[dayOfWeek]} (${dayOfWeek})`);
-    console.log(`Ora: ${startHour}:${startMinute.toString().padStart(2, '0')} - ${endHour}:${endMinute.toString().padStart(2, '0')}`);
-    
-    // Găsește disponibilitatea pentru această zi
     const dayAvailability = availability.filter(a => a.day === dayOfWeek);
-    
-    console.log(`Disponibilitate pentru ziua ${dayOfWeek}:`, dayAvailability);
-    
     if (dayAvailability.length === 0) {
       return {
         isValid: false,
@@ -237,33 +208,16 @@ export function isBookingWithinAvailability(checkInDate, checkOutDate, availabil
       };
     }
     
-    // Verifică dacă întreaga rezervare se încadrează în intervalele disponibile
     let isValid = false;
-    let validInterval = null;
-    
     for (const avail of dayAvailability) {
       const availStartMinutes = avail.startHour * 60 + avail.startMinute;
       const availEndMinutes = avail.endHour * 60 + avail.endMinute;
       const bookingStartMinutes = startHour * 60 + startMinute;
       const bookingEndMinutes = endHour * 60 + endMinute;
       
-      console.log(`Verificare interval: ${avail.startHour}:${avail.startMinute.toString().padStart(2, '0')}-${avail.endHour}:${avail.endMinute.toString().padStart(2, '0')} (${availStartMinutes}-${availEndMinutes} min)`);
-      console.log(`Rezervare: ${bookingStartMinutes}-${bookingEndMinutes} min`);
-      
-      // Verifică dacă ÎNTREAGA rezervare se încadrează în acest interval
       if (bookingStartMinutes >= availStartMinutes && bookingEndMinutes <= availEndMinutes) {
         isValid = true;
-        validInterval = avail;
-        console.log('✓ Rezervarea se încadrează în acest interval');
         break;
-      } else {
-        console.log('✗ Rezervarea NU se încadrează în acest interval');
-        if (bookingStartMinutes < availStartMinutes) {
-          console.log(`  - Începe prea devreme: ${bookingStartMinutes} < ${availStartMinutes}`);
-        }
-        if (bookingEndMinutes > availEndMinutes) {
-          console.log(`  - Se termină prea târziu: ${bookingEndMinutes} > ${availEndMinutes}`);
-        }
       }
     }
     
@@ -280,14 +234,12 @@ export function isBookingWithinAvailability(checkInDate, checkOutDate, availabil
     
     return { isValid: true };
   } else {
-    // Rezervare pe mai multe zile - logica veche (păstrată pentru compatibilitate)
     const currentDate = new Date(checkIn);
     while (currentDate < checkOut) {
-      const dayOfWeek = currentDate.getDay();
+      const dayOfWeek = getEuropeanDayFromDate(currentDate);
       const hour = currentDate.getHours();
       const minute = currentDate.getMinutes();
       
-      // Găsește disponibilitatea pentru această zi
       const dayAvailability = availability.filter(a => a.day === dayOfWeek);
       
       if (dayAvailability.length === 0) {
@@ -297,7 +249,6 @@ export function isBookingWithinAvailability(checkInDate, checkOutDate, availabil
         };
       }
       
-      // Verifică dacă ora este în intervalul permis
       let isTimeValid = false;
       for (const avail of dayAvailability) {
         const startMinutes = avail.startHour * 60 + avail.startMinute;
@@ -321,7 +272,6 @@ export function isBookingWithinAvailability(checkInDate, checkOutDate, availabil
         };
       }
       
-      // Verifică sfârșitul rezervării pentru aceeași zi
       if (currentDate.toDateString() === checkOut.toDateString()) {
         const endHour = checkOut.getHours();
         const endMinute = checkOut.getMinutes();
@@ -350,7 +300,6 @@ export function isBookingWithinAvailability(checkInDate, checkOutDate, availabil
         }
       }
       
-      // Trece la ziua următoare
       currentDate.setDate(currentDate.getDate() + 1);
       currentDate.setHours(0, 0, 0, 0);
     }
@@ -367,7 +316,6 @@ export function formatAvailability(availability) {
     return 'Întotdeauna disponibil';
   }
   
-  // Grupează după intervale orare
   const timeGroups = {};
   availability.forEach(avail => {
     const key = `${avail.startHour.toString().padStart(2, '0')}:${avail.startMinute.toString().padStart(2, '0')}-${avail.endHour.toString().padStart(2, '0')}:${avail.endMinute.toString().padStart(2, '0')}`;
@@ -377,91 +325,39 @@ export function formatAvailability(availability) {
     timeGroups[key].push(avail.day);
   });
   
-  console.log('Time groups pentru formatare:', timeGroups); // Debug
-  
-  // Formatează pentru afișare
   const formatted = [];
   Object.entries(timeGroups).forEach(([timeRange, days]) => {
-    const uniqueDays = [...new Set(days)];
+    const uniqueDays = [...new Set(days)].sort((a, b) => a - b);
     
-    // Sortare specială pentru zilele săptămânii
-    // Ordinea dorită: Luni(1), Marți(2), Miercuri(3), Joi(4), Vineri(5), Sâmbătă(6), Duminică(0)
-    uniqueDays.sort((a, b) => {
-      // Convertim duminica (0) la 7 pentru sortare
-      const dayA = a === 0 ? 7 : a;
-      const dayB = b === 0 ? 7 : b;
-      return dayA - dayB;
-    });
-    
-    console.log(`Pentru intervalul ${timeRange}, zile sortate:`, uniqueDays); // Debug
-    
-    // Creează intervale consecutive
     const ranges = [];
     let i = 0;
     
     while (i < uniqueDays.length) {
-      let start = i;
-      let end = i;
+      let startDay = uniqueDays[i];
+      let endDay = startDay;
       
-      // Găsește sfârșitul intervalului consecutiv
-      while (end + 1 < uniqueDays.length) {
-        const currentDay = uniqueDays[end];
-        const nextDay = uniqueDays[end + 1];
-        
-        // Logica de consecutivitate trebuie să trateze special duminica
-        let isConsecutive = false;
-        
-        if (currentDay === 6 && nextDay === 0) {
-          // Cazul special sâmbătă(6) -> duminică(0) (dar în array sortat va fi 6 -> 7)
-          // Acest caz nu se va întâmpla în array-ul sortat pentru că 0 devine 7
-          isConsecutive = false;
-        } else if (currentDay < 7 && nextDay < 7 && nextDay === currentDay + 1) {
-          // Consecutivitate normală (1->2, 2->3, etc.)
-          isConsecutive = true;
-        } else if (currentDay === 6 && nextDay === 7) {
-          // Sâmbătă -> Duminică (în reprezentarea sortată)
-          isConsecutive = true;
-        }
-        
-        if (isConsecutive) {
-          end++;
-        } else {
-          break;
-        }
+      while (i + 1 < uniqueDays.length && uniqueDays[i + 1] === uniqueDays[i] + 1) {
+        endDay = uniqueDays[i + 1];
+        i++;
       }
       
-      // Convertim înapoi pentru afișare
-      const startDay = uniqueDays[start] === 7 ? 0 : uniqueDays[start];
-      const endDay = uniqueDays[end] === 7 ? 0 : uniqueDays[end];
-      
-      if (end > start) {
-        // Interval de zile consecutive
-        const startName = DAYS_REVERSE_MAP[startDay];
-        const endName = DAYS_REVERSE_MAP[endDay];
-        
-        // Cazuri speciale pentru intervale complete
-        if (uniqueDays.length === 7 && start === 0 && end === 6) {
-          // Toate zilele săptămânii
+      if (startDay !== endDay) {
+        if (uniqueDays.length === 7 && startDay === 1 && endDay === 7) {
           ranges.push('luni-duminică');
         } else if (startDay === 1 && endDay === 5) {
-          // Zilele de lucru
           ranges.push('luni-vineri');
-        } else if (startDay === 6 && endDay === 0) {
-          // Weekend
+        } else if (startDay === 6 && endDay === 7 && uniqueDays.length === 2) {
           ranges.push('sâmbătă-duminică');
         } else {
-          ranges.push(`${startName}-${endName}`);
+          ranges.push(`${DAYS_REVERSE_MAP[startDay]}-${DAYS_REVERSE_MAP[endDay]}`);
         }
       } else {
-        // O singură zi
-        const dayName = DAYS_REVERSE_MAP[startDay];
-        ranges.push(dayName);
+        ranges.push(DAYS_REVERSE_MAP[startDay]);
       }
       
-      i = end + 1;
+      i++;
     }
     
-    console.log(`Ranges create pentru ${timeRange}:`, ranges); // Debug
     formatted.push(`${ranges.join(', ')} ${timeRange}`);
   });
   
