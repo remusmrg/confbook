@@ -9,10 +9,17 @@ const BookingForm = ({ room }) => {
   const [state, formAction] = useActionState(bookRoom, {});
   const router = useRouter();
 
-  // State pentru a seta valorile minime ale input-urilor
+  // State pentru a seta valorile minime ale input-urilor și fusul orar
   const [minDateTime, setMinDateTime] = useState('');
+  const [userTimezone, setUserTimezone] = useState('');
 
   useEffect(() => {
+    // ✅ Detectează fusul orar al utilizatorului
+    const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    setUserTimezone(timezone);
+    
+    console.log('Detected user timezone:', timezone);
+    
     // Setează data și ora minimă la momentul curent în fusul orar local
     const now = new Date();
     
@@ -80,15 +87,62 @@ const BookingForm = ({ room }) => {
     serverFormData.append('check_in_time', checkInTime);
     serverFormData.append('check_out_date', checkOutDate);
     serverFormData.append('check_out_time', checkOutTime);
+    
+    // ✅ ADAUGĂ fusul orar al utilizatorului
+    serverFormData.append('user_timezone', userTimezone);
 
     formAction(serverFormData);
   };
 
-
+  // ✅ Funcție pentru a afișa informații despre fusul orar
+  const getTimezoneInfo = () => {
+    if (!userTimezone) return '';
+    
+    if (userTimezone === 'Europe/Bucharest') {
+      return 'Ora României (unde se află sala)';
+    }
+    
+    // Calculează diferența de ore față de România
+    const romaniaTime = new Intl.DateTimeFormat('en', {
+      timeZone: 'Europe/Bucharest',
+      hour: '2-digit',
+      hour12: false
+    }).format(new Date());
+    
+    const userTime = new Intl.DateTimeFormat('en', {
+      timeZone: userTimezone,
+      hour: '2-digit',
+      hour12: false
+    }).format(new Date());
+    
+    const romaniaHour = parseInt(romaniaTime);
+    const userHour = parseInt(userTime);
+    const diff = romaniaHour - userHour;
+    
+    if (diff === 0) {
+      return `${userTimezone} (aceeași oră cu România)`;
+    } else if (diff > 0) {
+      return `${userTimezone} (România este cu ${diff}h înaintea dvs.)`;
+    } else {
+      return `${userTimezone} (România este cu ${Math.abs(diff)}h în urma dvs.)`;
+    }
+  };
 
   return (
     <div className='mt-6'>
       <h2 className='text-xl font-bold'>Rezervă această sală</h2>
+      
+      {/* ✅ Afișaj informativ despre fusul orar */}
+      {userTimezone && userTimezone !== 'Europe/Bucharest' && (
+        <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+          <p className="text-sm text-yellow-800">
+            <strong>📍 Atenție:</strong> Fusul dvs. orar: {getTimezoneInfo()}
+            <br />
+            Orele afișate sunt în fusul dvs. local, dar validarea se face conform programului sălii din România.
+          </p>
+        </div>
+      )}
+      
       <form action={handleSubmit} className='mt-4'>
         <input type='hidden' name='room_id' value={room.$id} />
         
@@ -110,7 +164,10 @@ const BookingForm = ({ room }) => {
               suppressHydrationWarning
             />
             <p className='text-xs text-gray-500 mt-1'>
-              {room.availability ? `Program: ${room.availability}` : 'Disponibil oricând'}
+              {userTimezone === 'Europe/Bucharest' 
+                ? `Program: ${room.availability || 'Disponibil oricând'}` 
+                : `Program sala (ora României): ${room.availability || 'Disponibil oricând'}`
+              }
             </p>
           </div>
           
@@ -150,9 +207,9 @@ const BookingForm = ({ room }) => {
         <div className='mt-4 text-sm text-gray-600'>
           <p><strong>Notă:</strong></p>
           <ul className='mt-1 space-y-1 list-disc list-inside text-xs'>
-            <li>Calendarul folosește formatul european (Luni = prima zi a săptămânii)</li>
-            <li>Ora este în format 24h (ex: 14:30 pentru 2:30 PM)</li>
-            <li>Toate orele sunt în fusul orar al României (EET/EEST)</li>
+            <li>Fusul dvs. orar detectat: {userTimezone || 'Se detectează...'}</li>
+            <li>Orele afișate în formular sunt în fusul dvs. local</li>
+            <li>Validarea disponibilității se face conform programului sălii (ora României)</li>
             <li>Rezervarea trebuie să respecte programul de disponibilitate al sălii</li>
           </ul>
         </div>
