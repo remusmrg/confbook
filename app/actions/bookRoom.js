@@ -21,9 +21,7 @@ async function bookRoom(previousState, formData) {
     const { user } = await checkAuth();
 
     if (!user) {
-      return {
-        error: 'Trebuie sa fiți autentificat ca să faceți o rezervare.',
-      };
+      return { error: 'Trebuie sa fiți autentificat ca să faceți o rezervare.' };
     }
 
     const checkInDate = formData.get('check_in_date');
@@ -31,15 +29,13 @@ async function bookRoom(previousState, formData) {
     const checkOutDate = formData.get('check_out_date');
     const checkOutTime = formData.get('check_out_time');
     const roomId = formData.get('room_id');
-    
-    // ✅ Fus orar utilizator
     const userTimezone = formData.get('user_timezone') || 'Europe/Bucharest';
 
     console.log('=== BOOKING TIMEZONE DEBUG ===');
     console.log('User timezone:', userTimezone);
     console.log('Input values:', { checkInDate, checkInTime, checkOutDate, checkOutTime });
 
-    // ✅ Parse cu setZone:true => tratează inputul ca fiind în fusul utilizatorului
+    // ✅ Parse inputul exact ca ora locală a utilizatorului
     const checkInLocal = DateTime.fromFormat(
       `${checkInDate}T${checkInTime}`,
       "yyyy-MM-dd'T'HH:mm",
@@ -52,37 +48,22 @@ async function bookRoom(previousState, formData) {
       { zone: userTimezone, setZone: true }
     );
 
-    // ✅ Convertim în fusul orar al României pentru validarea disponibilității
+    // ✅ Conversie pentru validarea disponibilității în fusul României
     const checkInRomania = checkInLocal.setZone('Europe/Bucharest');
     const checkOutRomania = checkOutLocal.setZone('Europe/Bucharest');
-
     const nowRomania = DateTime.now().setZone('Europe/Bucharest');
 
-    console.log('Local user time:', {
-      checkIn: checkInLocal.toISO(),
-      checkOut: checkOutLocal.toISO()
-    });
-    console.log('Romania time:', {
-      checkIn: checkInRomania.toISO(),
-      checkOut: checkOutRomania.toISO()
-    });
+    console.log('checkInLocal (user tz):', checkInLocal.toISO());
+    console.log('checkOutLocal (user tz):', checkOutLocal.toISO());
+    console.log('checkInRomania:', checkInRomania.toISO());
+    console.log('checkOutRomania:', checkOutRomania.toISO());
+    console.log('nowRomania:', nowRomania.toISO());
 
     // ✅ Validări
-    if (!checkInLocal.isValid) {
-      return { error: 'Data și ora de check-in sunt invalide' };
-    }
-
-    if (!checkOutLocal.isValid) {
-      return { error: 'Data și ora de check-out sunt invalide' };
-    }
-
-    if (checkInRomania < nowRomania) {
-      return { error: 'Check-in nu poate fi în trecut' };
-    }
-
-    if (checkOutRomania <= checkInRomania) {
-      return { error: 'Check-out trebuie să fie după check-in' };
-    }
+    if (!checkInLocal.isValid) return { error: 'Data și ora de check-in sunt invalide' };
+    if (!checkOutLocal.isValid) return { error: 'Data și ora de check-out sunt invalide' };
+    if (checkInRomania < nowRomania) return { error: 'Check-in nu poate fi în trecut' };
+    if (checkOutRomania <= checkInRomania) return { error: 'Check-out trebuie să fie după check-in' };
 
     // ✅ Obține sala
     let room;
@@ -96,16 +77,16 @@ async function bookRoom(previousState, formData) {
       return { error: 'Sala nu a fost găsită' };
     }
 
-    // ✅ Validare disponibilitate (ora României)
+    // ✅ Validare disponibilitate (România)
     if (room.availability) {
       const availability = parseAvailability(room.availability);
 
       const checkInRomaniaJS = checkInRomania.toJSDate();
       const checkOutRomaniaJS = checkOutRomania.toJSDate();
 
-      console.log('=== AVAILABILITY VALIDATION (Romania time) ===');
-      console.log('Check-in Romania JS Date:', checkInRomaniaJS);
-      console.log('Check-out Romania JS Date:', checkOutRomaniaJS);
+      console.log('=== AVAILABILITY VALIDATION ===');
+      console.log('checkInRomaniaJS:', checkInRomaniaJS);
+      console.log('checkOutRomaniaJS:', checkOutRomaniaJS);
 
       const availabilityCheck = isBookingWithinAvailability(
         checkInRomaniaJS,
@@ -113,10 +94,9 @@ async function bookRoom(previousState, formData) {
         availability
       );
 
-      console.log('Availability check result:', availabilityCheck);
+      console.log('availabilityCheck result:', availabilityCheck);
 
       if (!availabilityCheck.isValid) {
-        // ✅ Mesaj de eroare clar pentru utilizator
         const userCheckInTime = checkInLocal.toFormat('HH:mm');
         const userCheckOutTime = checkOutLocal.toFormat('HH:mm');
         const romaniaCheckInTime = checkInRomania.toFormat('HH:mm');
@@ -125,16 +105,14 @@ async function bookRoom(previousState, formData) {
         let errorMessage = availabilityCheck.message;
 
         if (userTimezone !== 'Europe/Bucharest') {
-          errorMessage += ` (Orele selectate ${userCheckInTime}-${userCheckOutTime} în fusul dvs. orar corespund cu ${romaniaCheckInTime}-${romaniaCheckOutTime} ora României, unde se află sala)`;
+          errorMessage += ` (Orele selectate ${userCheckInTime}-${userCheckOutTime} în fusul dvs. corespund cu ${romaniaCheckInTime}-${romaniaCheckOutTime} ora României)`;
         }
 
-        return {
-          error: errorMessage
-        };
+        return { error: errorMessage };
       }
     }
 
-    // ✅ În DB salvăm UTC
+    // ✅ Convertim în UTC pentru DB
     const checkInUTC = checkInLocal.toUTC();
     const checkOutUTC = checkOutLocal.toUTC();
 
@@ -145,9 +123,7 @@ async function bookRoom(previousState, formData) {
     );
 
     if (!isAvailable) {
-      return {
-        error: 'Această sală este deja rezervată pentru perioada selectată',
-      };
+      return { error: 'Această sală este deja rezervată pentru perioada selectată' };
     }
 
     const bookingData = {
@@ -164,14 +140,11 @@ async function bookRoom(previousState, formData) {
       bookingData
     );
 
-    return {
-      success: true,
-    };
+    return { success: true };
+
   } catch (error) {
     console.log('Failed to book room', error);
-    return {
-      error: 'A apărut o eroare la rezervarea sălii',
-    };
+    return { error: 'A apărut o eroare la rezervarea sălii' };
   }
 }
 
