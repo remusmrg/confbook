@@ -22,6 +22,7 @@ import {
   deleteUserAdmin,
   deleteBookingAdmin
 } from '@/app/actions/adminActions';
+import { formatDateEuropean, isBookingActive } from '@/utils/dateFormatter';
 
 const AdminPanel = () => {
   const { currentUser, isAuthenticated } = useAuth();
@@ -159,19 +160,6 @@ const AdminPanel = () => {
     }
   };
 
-  const formatDate = (dateString) => {
-    const date = new Date(dateString);
-    return new Intl.DateTimeFormat('ro-RO', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: false,
-      timeZone: 'Europe/Bucharest',
-    }).format(date);
-  };
-
   if (loading) {
     return (
       <div className="flex justify-center items-center min-h-screen">
@@ -236,6 +224,7 @@ const AdminPanel = () => {
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Proprietar</th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Capacitate</th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Preț/Oră</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Disponibilitate</th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Acțiuni</th>
                       </tr>
                     </thead>
@@ -244,10 +233,14 @@ const AdminPanel = () => {
                         <tr key={room.$id} className="hover:bg-gray-50">
                           <td className="px-6 py-4 font-medium text-gray-900">{room.name}</td>
                           <td className="px-6 py-4 text-gray-600">
-                            {room.owner.name} ({room.owner.email})
+                            {room.owner.name} <br />
+                            <span className="text-sm text-gray-500">({room.owner.email})</span>
                           </td>
                           <td className="px-6 py-4 text-gray-600">{room.capacity} persoane</td>
                           <td className="px-6 py-4 text-gray-600">{room.price_per_hour} lei</td>
+                          <td className="px-6 py-4 text-gray-600 text-sm">
+                            {room.availability || 'Întotdeauna disponibil'}
+                          </td>
                           <td className="px-6 py-4">
                             <button
                               onClick={() => handleDeleteRoom(room.$id, room.name)}
@@ -301,10 +294,17 @@ const AdminPanel = () => {
                     <tbody className="divide-y divide-gray-200">
                       {data.users.map((user) => (
                         <tr key={user.$id} className="hover:bg-gray-50">
-                          <td className="px-6 py-4 font-medium text-gray-900">{user.name}</td>
+                          <td className="px-6 py-4 font-medium text-gray-900">
+                            {user.name}
+                            {user.labels && user.labels.includes('admin') && (
+                              <span className="ml-2 px-2 py-1 text-xs bg-red-100 text-red-800 rounded-full">
+                                Admin
+                              </span>
+                            )}
+                          </td>
                           <td className="px-6 py-4 text-gray-600">{user.email}</td>
                           <td className="px-6 py-4 text-gray-600">
-                            {formatDate(user.$createdAt)}
+                            {formatDateEuropean(user.$createdAt)}
                           </td>
                           <td className="px-6 py-4">
                             {user.$id !== currentUser.id ? (
@@ -366,8 +366,8 @@ const AdminPanel = () => {
                       {data.bookings
                         .sort((a, b) => {
                           // Sortează rezervările: active primele, apoi după data check-out
-                          const isActiveA = new Date(a.check_out) > new Date();
-                          const isActiveB = new Date(b.check_out) > new Date();
+                          const isActiveA = isBookingActive(a.check_out);
+                          const isActiveB = isBookingActive(b.check_out);
                           
                           if (isActiveA && !isActiveB) return -1;
                           if (!isActiveA && isActiveB) return 1;
@@ -376,18 +376,19 @@ const AdminPanel = () => {
                           return new Date(b.check_out) - new Date(a.check_out);
                         })
                         .map((booking) => {
-                          const isActive = new Date(booking.check_out) > new Date();
+                          const isActive = isBookingActive(booking.check_out);
                           return (
                             <tr key={booking.$id} className={`hover:bg-gray-50 ${isActive ? 'bg-green-50' : ''}`}>
                               <td className="px-6 py-4 font-medium text-gray-900">{booking.room.name}</td>
                               <td className="px-6 py-4 text-gray-600">
-                                {booking.user.name} ({booking.user.email})
+                                {booking.user.name} <br />
+                                <span className="text-sm text-gray-500">({booking.user.email})</span>
                               </td>
-                              <td className="px-6 py-4 text-gray-600">
-                                {formatDate(booking.check_in)}
+                              <td className="px-6 py-4 text-gray-600 text-sm">
+                                {formatDateEuropean(booking.check_in)}
                               </td>
-                              <td className="px-6 py-4 text-gray-600">
-                                {formatDate(booking.check_out)}
+                              <td className="px-6 py-4 text-gray-600 text-sm">
+                                {formatDateEuropean(booking.check_out)}
                               </td>
                               <td className="px-6 py-4">
                                 <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${

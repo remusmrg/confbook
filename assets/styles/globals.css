@@ -1,3 +1,127 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Configurare globală pentru format european */
+html {
+  /* Setează locale-ul pentru întreaga pagină */
+  --locale: 'ro-RO';
+}
+
+/* Forțează formatul european pentru input-urile de dată și timp */
+input[type="datetime-local"],
+input[type="time"],
+input[type="date"] {
+  font-family: inherit;
+  
+  /* Forțează formatul 24h prin CSS custom properties */
+  --webkit-datetime-edit-ampm-field-display: none;
+}
+
+/* Ascunde câmpul AM/PM dacă apare */
+input[type="datetime-local"]::-webkit-datetime-edit-ampm-field,
+input[type="time"]::-webkit-datetime-edit-ampm-field {
+  display: none !important;
+  width: 0 !important;
+  opacity: 0 !important;
+  visibility: hidden !important;
+}
+
+/* Stilizează iconițele de calendar și ceas */
+input[type="datetime-local"]::-webkit-calendar-picker-indicator,
+input[type="time"]::-webkit-calendar-picker-indicator,
+input[type="date"]::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  filter: invert(0.5);
+  transition: filter 0.2s ease;
+}
+
+input[type="datetime-local"]::-webkit-calendar-picker-indicator:hover,
+input[type="time"]::-webkit-calendar-picker-indicator:hover,
+input[type="date"]::-webkit-calendar-picker-indicator:hover {
+  filter: invert(0.3);
+}
+
+/* Stiluri pentru focus pe input-urile de timp */
+input[type="datetime-local"]:focus,
+input[type="time"]:focus,
+input[type="date"]:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+/* Asigură-te că textul este lizibil */
+input[type="datetime-local"]::-webkit-datetime-edit-text,
+input[type="datetime-local"]::-webkit-datetime-edit-hour-field,
+input[type="datetime-local"]::-webkit-datetime-edit-minute-field,
+input[type="datetime-local"]::-webkit-datetime-edit-day-field,
+input[type="datetime-local"]::-webkit-datetime-edit-month-field,
+input[type="datetime-local"]::-webkit-datetime-edit-year-field,
+input[type="time"]::-webkit-datetime-edit-hour-field,
+input[type="time"]::-webkit-datetime-edit-minute-field {
+  color: inherit;
+  font-weight: inherit;
+}
+
+/* Stiluri pentru calendar dropdown */
+input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='currentColor' aria-hidden='true'%3e%3cpath fill-rule='evenodd' d='M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z' clip-rule='evenodd'/%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 16px 16px;
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+}
+
+/* Stiluri pentru time input */
+input[type="time"]::-webkit-calendar-picker-indicator {
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='currentColor' aria-hidden='true'%3e%3cpath fill-rule='evenodd' d='M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z' clip-rule='evenodd'/%3e%3c/svg%3e");
+}
+
+/* Asigură compatibilitatea cu tema întunecată */
+@media (prefers-color-scheme: dark) {
+  input[type="datetime-local"]::-webkit-calendar-picker-indicator,
+  input[type="time"]::-webkit-calendar-picker-indicator,
+  input[type="date"]::-webkit-calendar-picker-indicator {
+    filter: invert(1);
+  }
+  
+  input[type="datetime-local"]::-webkit-calendar-picker-indicator:hover,
+  input[type="time"]::-webkit-calendar-picker-indicator:hover,
+  input[type="date"]::-webkit-calendar-picker-indicator:hover {
+    filter: invert(0.8);
+  }
+}
+
+/* Stiluri pentru mesajele de validare */
+.european-date-hint {
+  font-size: 0.75rem;
+  color: #6b7280;
+  margin-top: 0.25rem;
+  font-style: italic;
+}
+
+/* Stiluri pentru indicatoarele de format */
+.format-indicator {
+  position: relative;
+}
+
+.format-indicator::after {
+  content: "DD.MM.YYYY HH:mm";
+  position: absolute;
+  right: 40px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 0.75rem;
+  color: #9ca3af;
+  pointer-events: none;
+  background: white;
+  padding: 0 4px;
+}
+
+.format-indicator input:focus::after,
+.format-indicator input:not(:placeholder-shown)::after {
+  display: none;
+}

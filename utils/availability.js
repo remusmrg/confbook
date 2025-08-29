@@ -47,10 +47,11 @@ function normalizeDay(day) {
 
 /**
  * Convertește ziua din sistemul JavaScript (0=duminică) în sistemul european (1=luni)
+ * IMPORTANT: Aceasta este conversie critică pentru validarea corectă!
  */
 function getEuropeanDayFromDate(date) {
-  const jsDay = date.getDay();
-  return jsDay === 0 ? 7 : jsDay;
+  const jsDay = date.getDay(); // JavaScript: 0=Sunday, 1=Monday, ..., 6=Saturday
+  return jsDay === 0 ? 7 : jsDay; // European: 1=Monday, 2=Tuesday, ..., 7=Sunday
 }
 
 /**
@@ -79,6 +80,7 @@ function parseDayRange(dayRange) {
         days.push(i);
       }
     } else {
+      // Cazul când intervalul trece peste sfârșitul săptămânii (ex: Sâmbătă-Luni)
       for (let i = startDay; i <= 7; i++) days.push(i);
       for (let i = 1; i <= endDay; i++) days.push(i);
     }
@@ -182,16 +184,28 @@ export function parseAvailability(availabilityString) {
 
 /**
  * Verifică dacă o rezervare este în intervalul de disponibilitate
+ * ATENȚIE: Această funcție lucrează cu obiecte Date JavaScript native!
+ * Obiectele Date trebuie să fie deja în fusul orar corect (local time)!
  */
 export function isBookingWithinAvailability(checkInDate, checkOutDate, availability) {
   if (!availability || availability.length === 0) {
     return { isValid: true };
   }
   
+  console.log('=== AVAILABILITY CHECK DEBUG ===');
+  console.log('Check-in Date object:', checkInDate);
+  console.log('Check-out Date object:', checkOutDate);
+  console.log('Check-in ISO:', checkInDate.toISOString());
+  console.log('Check-out ISO:', checkOutDate.toISOString());
+  
   const checkIn = new Date(checkInDate);
   const checkOut = new Date(checkOutDate);
   
+  console.log('Local check-in:', checkIn.toString());
+  console.log('Local check-out:', checkOut.toString());
+  
   const sameDay = checkIn.toDateString() === checkOut.toDateString();
+  console.log('Same day?', sameDay);
   
   if (sameDay) {
     const dayOfWeek = getEuropeanDayFromDate(checkIn);
@@ -200,7 +214,14 @@ export function isBookingWithinAvailability(checkInDate, checkOutDate, availabil
     const endHour = checkOut.getHours();
     const endMinute = checkOut.getMinutes();
     
+    console.log('JavaScript day (0=Sun):', checkIn.getDay());
+    console.log('European day (1=Mon):', dayOfWeek);
+    console.log('Day name:', DAYS_REVERSE_MAP[dayOfWeek]);
+    console.log('Booking time:', `${startHour.toString().padStart(2, '0')}:${startMinute.toString().padStart(2, '0')}-${endHour.toString().padStart(2, '0')}:${endMinute.toString().padStart(2, '0')}`);
+    
     const dayAvailability = availability.filter(a => a.day === dayOfWeek);
+    console.log('Day availability slots:', dayAvailability);
+    
     if (dayAvailability.length === 0) {
       return {
         isValid: false,
@@ -215,9 +236,16 @@ export function isBookingWithinAvailability(checkInDate, checkOutDate, availabil
       const bookingStartMinutes = startHour * 60 + startMinute;
       const bookingEndMinutes = endHour * 60 + endMinute;
       
+      console.log(`Checking availability slot: ${avail.startHour}:${avail.startMinute.toString().padStart(2, '0')}-${avail.endHour}:${avail.endMinute.toString().padStart(2, '0')}`);
+      console.log(`Available minutes: ${availStartMinutes}-${availEndMinutes}`);
+      console.log(`Booking minutes: ${bookingStartMinutes}-${bookingEndMinutes}`);
+      
       if (bookingStartMinutes >= availStartMinutes && bookingEndMinutes <= availEndMinutes) {
         isValid = true;
+        console.log('✓ Booking fits in this slot');
         break;
+      } else {
+        console.log('✗ Booking does not fit in this slot');
       }
     }
     
@@ -232,8 +260,11 @@ export function isBookingWithinAvailability(checkInDate, checkOutDate, availabil
       };
     }
     
+    console.log('✓ Single day booking is valid');
     return { isValid: true };
   } else {
+    // Rezervare multi-zi (nu e folosită în practica obișnuită, dar o lăsăm pentru completitudine)
+    console.log('Multi-day booking validation...');
     const currentDate = new Date(checkIn);
     while (currentDate < checkOut) {
       const dayOfWeek = getEuropeanDayFromDate(currentDate);
@@ -304,6 +335,7 @@ export function isBookingWithinAvailability(checkInDate, checkOutDate, availabil
       currentDate.setHours(0, 0, 0, 0);
     }
     
+    console.log('✓ Multi-day booking is valid');
     return { isValid: true };
   }
 }
@@ -316,6 +348,7 @@ export function formatAvailability(availability) {
     return 'Întotdeauna disponibil';
   }
   
+  // Grupează după intervalul orar
   const timeGroups = {};
   availability.forEach(avail => {
     const key = `${avail.startHour.toString().padStart(2, '0')}:${avail.startMinute.toString().padStart(2, '0')}-${avail.endHour.toString().padStart(2, '0')}:${avail.endMinute.toString().padStart(2, '0')}`;

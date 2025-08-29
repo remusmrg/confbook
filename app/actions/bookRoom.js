@@ -31,7 +31,7 @@ async function bookRoom(previousState, formData) {
     const checkOutTime = formData.get('check_out_time');
     const roomId = formData.get('room_id');
 
-    // Construiește datele cu fus orar explicit
+    // Construiește datele în fusul orar local (Bucharest)
     const checkInLocal = DateTime.fromISO(`${checkInDate}T${checkInTime}`, {
       zone: 'Europe/Bucharest',
     });
@@ -39,11 +39,18 @@ async function bookRoom(previousState, formData) {
       zone: 'Europe/Bucharest',
     });
 
-    const checkInDateTime = checkInLocal.toUTC();
-    const checkOutDateTime = checkOutLocal.toUTC();
+    // Pentru comparații și validări, lucrează în local time
     const now = DateTime.now().setZone('Europe/Bucharest');
 
-    // ✅ Validare date
+    // ✅ Validare date de bază
+    if (!checkInLocal.isValid) {
+      return { error: 'Data și ora de check-in sunt invalide' };
+    }
+
+    if (!checkOutLocal.isValid) {
+      return { error: 'Data și ora de check-out sunt invalide' };
+    }
+
     if (checkInLocal < now) {
       return { error: 'Check-in nu poate fi în trecut' };
     }
@@ -64,14 +71,32 @@ async function bookRoom(previousState, formData) {
       return { error: 'Sala nu a fost găsită' };
     }
 
-    // ✅ Validare disponibilitate pe baza programului sălii
+    // ✅ Validare disponibilitate pe baza programului sălii (în timp local!)
     if (room.availability) {
       const availability = parseAvailability(room.availability);
+      
+      // IMPORTANT: Folosim obiectele Date native pentru validarea disponibilității
+      // pentru că funcția isBookingWithinAvailability așteaptă obiectele Date JavaScript
+      const checkInDate_JS = checkInLocal.toJSDate();
+      const checkOutDate_JS = checkOutLocal.toJSDate();
+      
+      console.log('=== DEBUG AVAILABILITY ===');
+      console.log('Check-in local:', checkInLocal.toISO());
+      console.log('Check-out local:', checkOutLocal.toISO());
+      console.log('Check-in JS Date:', checkInDate_JS);
+      console.log('Check-out JS Date:', checkOutDate_JS);
+      console.log('Day of week (JS):', checkInDate_JS.getDay()); // 0=Sunday
+      console.log('Day of week (European):', checkInDate_JS.getDay() === 0 ? 7 : checkInDate_JS.getDay()); // 1=Monday
+      console.log('Room availability:', room.availability);
+      console.log('Parsed availability:', availability);
+      
       const availabilityCheck = isBookingWithinAvailability(
-        checkInLocal.toJSDate(),
-        checkOutLocal.toJSDate(),
+        checkInDate_JS,
+        checkOutDate_JS,
         availability
       );
+      
+      console.log('Availability check result:', availabilityCheck);
       
       if (!availabilityCheck.isValid) {
         return {
@@ -81,10 +106,14 @@ async function bookRoom(previousState, formData) {
     }
 
     // ✅ Verificare disponibilitate (conflicte cu alte rezervări)
+    // Pentru baza de date, convertim la UTC
+    const checkInUTC = checkInLocal.toUTC();
+    const checkOutUTC = checkOutLocal.toUTC();
+    
     const isAvailable = await checkRoomAvailability(
       roomId,
-      checkInDateTime.toISO(),
-      checkOutDateTime.toISO()
+      checkInUTC.toISO(),
+      checkOutUTC.toISO()
     );
 
     if (!isAvailable) {
@@ -93,12 +122,19 @@ async function bookRoom(previousState, formData) {
       };
     }
 
+    // ✅ Salvează în baza de date în format UTC
     const bookingData = {
-      check_in: checkInDateTime.toISO(),     // Salvezi în UTC
-      check_out: checkOutDateTime.toISO(),
+      check_in: checkInUTC.toISO(),
+      check_out: checkOutUTC.toISO(),
       user_id: user.id,
       room_id: roomId,
     };
+
+    console.log('=== SAVING BOOKING ===');
+    console.log('Local check-in:', checkInLocal.toISO());
+    console.log('Local check-out:', checkOutLocal.toISO());
+    console.log('UTC check-in (saved):', checkInUTC.toISO());
+    console.log('UTC check-out (saved):', checkOutUTC.toISO());
 
     await databases.createDocument(
       process.env.NEXT_PUBLIC_APPWRITE_DATABASE,
