@@ -205,15 +205,30 @@ export function isBookingWithinAvailability(checkInDate, checkOutDate, availabil
   const checkIn = new Date(checkInDate);
   const checkOut = new Date(checkOutDate);
   
-  // Verifică fiecare zi din rezervare
-  const currentDate = new Date(checkIn);
-  while (currentDate < checkOut) {
-    const dayOfWeek = currentDate.getDay();
-    const hour = currentDate.getHours();
-    const minute = currentDate.getMinutes();
+  console.log('Verificare disponibilitate:', {
+    checkIn: checkIn.toString(),
+    checkOut: checkOut.toString(),
+    availability
+  });
+  
+  // Verifică dacă rezervarea este în aceeași zi
+  const sameDay = checkIn.toDateString() === checkOut.toDateString();
+  
+  if (sameDay) {
+    // Rezervare într-o singură zi
+    const dayOfWeek = checkIn.getDay();
+    const startHour = checkIn.getHours();
+    const startMinute = checkIn.getMinutes();
+    const endHour = checkOut.getHours();
+    const endMinute = checkOut.getMinutes();
+    
+    console.log(`Rezervare într-o singură zi: ${DAYS_REVERSE_MAP[dayOfWeek]} (${dayOfWeek})`);
+    console.log(`Ora: ${startHour}:${startMinute.toString().padStart(2, '0')} - ${endHour}:${endMinute.toString().padStart(2, '0')}`);
     
     // Găsește disponibilitatea pentru această zi
     const dayAvailability = availability.filter(a => a.day === dayOfWeek);
+    
+    console.log(`Disponibilitate pentru ziua ${dayOfWeek}:`, dayAvailability);
     
     if (dayAvailability.length === 0) {
       return {
@@ -222,65 +237,126 @@ export function isBookingWithinAvailability(checkInDate, checkOutDate, availabil
       };
     }
     
-    // Verifică dacă ora este în intervalul permis
-    let isTimeValid = false;
+    // Verifică dacă întreaga rezervare se încadrează în intervalele disponibile
+    let isValid = false;
+    let validInterval = null;
+    
     for (const avail of dayAvailability) {
-      const startMinutes = avail.startHour * 60 + avail.startMinute;
-      const endMinutes = avail.endHour * 60 + avail.endMinute;
-      const currentMinutes = hour * 60 + minute;
+      const availStartMinutes = avail.startHour * 60 + avail.startMinute;
+      const availEndMinutes = avail.endHour * 60 + avail.endMinute;
+      const bookingStartMinutes = startHour * 60 + startMinute;
+      const bookingEndMinutes = endHour * 60 + endMinute;
       
-      if (currentMinutes >= startMinutes && currentMinutes < endMinutes) {
-        isTimeValid = true;
+      console.log(`Verificare interval: ${avail.startHour}:${avail.startMinute.toString().padStart(2, '0')}-${avail.endHour}:${avail.endMinute.toString().padStart(2, '0')} (${availStartMinutes}-${availEndMinutes} min)`);
+      console.log(`Rezervare: ${bookingStartMinutes}-${bookingEndMinutes} min`);
+      
+      // Verifică dacă ÎNTREAGA rezervare se încadrează în acest interval
+      if (bookingStartMinutes >= availStartMinutes && bookingEndMinutes <= availEndMinutes) {
+        isValid = true;
+        validInterval = avail;
+        console.log('✓ Rezervarea se încadrează în acest interval');
         break;
+      } else {
+        console.log('✗ Rezervarea NU se încadrează în acest interval');
+        if (bookingStartMinutes < availStartMinutes) {
+          console.log(`  - Începe prea devreme: ${bookingStartMinutes} < ${availStartMinutes}`);
+        }
+        if (bookingEndMinutes > availEndMinutes) {
+          console.log(`  - Se termină prea târziu: ${bookingEndMinutes} > ${availEndMinutes}`);
+        }
       }
     }
     
-    if (!isTimeValid) {
+    if (!isValid) {
       const availTimes = dayAvailability.map(a => 
         `${a.startHour.toString().padStart(2, '0')}:${a.startMinute.toString().padStart(2, '0')}-${a.endHour.toString().padStart(2, '0')}:${a.endMinute.toString().padStart(2, '0')}`
       ).join(', ');
       
       return {
         isValid: false,
-        message: `Ora ${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')} ${DAYS_REVERSE_MAP[dayOfWeek]} nu este în intervalul disponibil: ${availTimes}`
+        message: `Rezervarea ${startHour.toString().padStart(2, '0')}:${startMinute.toString().padStart(2, '0')}-${endHour.toString().padStart(2, '0')}:${endMinute.toString().padStart(2, '0')} ${DAYS_REVERSE_MAP[dayOfWeek]} nu se încadrează în intervalele disponibile: ${availTimes}`
       };
     }
     
-    // Verifică sfârșitul rezervării pentru aceeași zi
-    if (currentDate.toDateString() === checkOut.toDateString()) {
-      const endHour = checkOut.getHours();
-      const endMinute = checkOut.getMinutes();
-      const endCurrentMinutes = endHour * 60 + endMinute;
+    return { isValid: true };
+  } else {
+    // Rezervare pe mai multe zile - logica veche (păstrată pentru compatibilitate)
+    const currentDate = new Date(checkIn);
+    while (currentDate < checkOut) {
+      const dayOfWeek = currentDate.getDay();
+      const hour = currentDate.getHours();
+      const minute = currentDate.getMinutes();
       
-      let isEndTimeValid = false;
+      // Găsește disponibilitatea pentru această zi
+      const dayAvailability = availability.filter(a => a.day === dayOfWeek);
+      
+      if (dayAvailability.length === 0) {
+        return {
+          isValid: false,
+          message: `Sala nu este disponibilă ${DAYS_REVERSE_MAP[dayOfWeek]}`
+        };
+      }
+      
+      // Verifică dacă ora este în intervalul permis
+      let isTimeValid = false;
       for (const avail of dayAvailability) {
         const startMinutes = avail.startHour * 60 + avail.startMinute;
         const endMinutes = avail.endHour * 60 + avail.endMinute;
+        const currentMinutes = hour * 60 + minute;
         
-        if (endCurrentMinutes <= endMinutes && endCurrentMinutes > startMinutes) {
-          isEndTimeValid = true;
+        if (currentMinutes >= startMinutes && currentMinutes < endMinutes) {
+          isTimeValid = true;
           break;
         }
       }
       
-      if (!isEndTimeValid) {
+      if (!isTimeValid) {
         const availTimes = dayAvailability.map(a => 
           `${a.startHour.toString().padStart(2, '0')}:${a.startMinute.toString().padStart(2, '0')}-${a.endHour.toString().padStart(2, '0')}:${a.endMinute.toString().padStart(2, '0')}`
         ).join(', ');
         
         return {
           isValid: false,
-          message: `Ora de sfârșit ${endHour.toString().padStart(2, '0')}:${endMinute.toString().padStart(2, '0')} ${DAYS_REVERSE_MAP[dayOfWeek]} nu este în intervalul disponibil: ${availTimes}`
+          message: `Ora ${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')} ${DAYS_REVERSE_MAP[dayOfWeek]} nu este în intervalul disponibil: ${availTimes}`
         };
       }
+      
+      // Verifică sfârșitul rezervării pentru aceeași zi
+      if (currentDate.toDateString() === checkOut.toDateString()) {
+        const endHour = checkOut.getHours();
+        const endMinute = checkOut.getMinutes();
+        const endCurrentMinutes = endHour * 60 + endMinute;
+        
+        let isEndTimeValid = false;
+        for (const avail of dayAvailability) {
+          const startMinutes = avail.startHour * 60 + avail.startMinute;
+          const endMinutes = avail.endHour * 60 + avail.endMinute;
+          
+          if (endCurrentMinutes <= endMinutes && endCurrentMinutes > startMinutes) {
+            isEndTimeValid = true;
+            break;
+          }
+        }
+        
+        if (!isEndTimeValid) {
+          const availTimes = dayAvailability.map(a => 
+            `${a.startHour.toString().padStart(2, '0')}:${a.startMinute.toString().padStart(2, '0')}-${a.endHour.toString().padStart(2, '0')}:${a.endMinute.toString().padStart(2, '0')}`
+          ).join(', ');
+          
+          return {
+            isValid: false,
+            message: `Ora de sfârșit ${endHour.toString().padStart(2, '0')}:${endMinute.toString().padStart(2, '0')} ${DAYS_REVERSE_MAP[dayOfWeek]} nu este în intervalul disponibil: ${availTimes}`
+          };
+        }
+      }
+      
+      // Trece la ziua următoare
+      currentDate.setDate(currentDate.getDate() + 1);
+      currentDate.setHours(0, 0, 0, 0);
     }
     
-    // Trece la ziua următoare
-    currentDate.setDate(currentDate.getDate() + 1);
-    currentDate.setHours(0, 0, 0, 0);
+    return { isValid: true };
   }
-  
-  return { isValid: true };
 }
 
 /**
