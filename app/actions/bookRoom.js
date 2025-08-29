@@ -31,11 +31,11 @@ async function bookRoom(previousState, formData) {
 
     console.log('=== BOOKING TIMEZONE DEBUG (VERCEL FIXED) ===');
     console.log('User timezone:', userTimezone);
-    console.log('Server timezone (process.env.TZ):', process.env.TZ);
+    console.log('Server timezone (process.env.TZ):', process.env.TZ || 'UTC (Vercel default)');
     console.log('Input values:', { checkInDate, checkInTime, checkOutDate, checkOutTime });
 
     // ✅ CRITICAL FIX: Crează DateTime-uri explicite în fusul orar al utilizatorului
-    // Aceasta funcționează și pe Vercel unde serverul e în UTC
+    // Funcționează perfect pe Vercel unde serverul e în UTC
     const checkInLocal = DateTime.fromFormat(
       `${checkInDate} ${checkInTime}`,
       'yyyy-MM-dd HH:mm',
@@ -48,13 +48,14 @@ async function bookRoom(previousState, formData) {
       { zone: userTimezone }
     );
 
-    // ✅ Pentru validarea disponibilității, ÎNTOTDEAUNA convertim la Romania
+    // ✅ Pentru validarea disponibilității, ÎNTOTDEAUNA convertim la România
     const checkInRomania = checkInLocal.setZone('Europe/Bucharest');
     const checkOutRomania = checkOutLocal.setZone('Europe/Bucharest');
     
     // ✅ "Acum" în România pentru validarea "în trecut"
     const nowRomania = DateTime.now().setZone('Europe/Bucharest');
 
+    console.log('=== TIMEZONE CONVERSIONS ===');
     console.log('checkInLocal (user tz):', checkInLocal.toISO());
     console.log('checkOutLocal (user tz):', checkOutLocal.toISO());
     console.log('checkInRomania (validation tz):', checkInRomania.toISO());
@@ -119,7 +120,7 @@ async function bookRoom(previousState, formData) {
       }
     }
 
-    // ✅ CRITICAL: Pentru baza de date, ÎNTOTDEAUNA salvează în UTC
+    // ✅ CRITICAL: Pentru baza de date și verificarea disponibilității, ÎNTOTDEAUNA salvează în UTC
     const checkInUTC = checkInLocal.toUTC();
     const checkOutUTC = checkOutLocal.toUTC();
 
@@ -128,6 +129,7 @@ async function bookRoom(previousState, formData) {
     console.log('checkOutUTC pentru DB:', checkOutUTC.toISO());
 
     // ✅ Verifică disponibilitatea pentru rezervări existente
+    // Trimitem la checkRoomAvailability în format UTC ISO string
     const isAvailable = await checkRoomAvailability(
       roomId,
       checkInUTC.toISO(),
@@ -157,7 +159,7 @@ async function bookRoom(previousState, formData) {
     return { success: true };
 
   } catch (error) {
-    console.log('Failed to book room', error);
+    console.error('Failed to book room:', error);
     return { error: 'A apărut o eroare la rezervarea sălii' };
   }
 }
