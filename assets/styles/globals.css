@@ -27,19 +27,28 @@ input[type="time"]::-webkit-datetime-edit-ampm-field {
   visibility: hidden !important;
 }
 
-/* Stilizează iconițele de calendar și ceas */
+/* Stilizează iconițele de calendar și ceas - ACTUALIZAT pentru vizibilitate completă */
 input[type="datetime-local"]::-webkit-calendar-picker-indicator,
 input[type="time"]::-webkit-calendar-picker-indicator,
 input[type="date"]::-webkit-calendar-picker-indicator {
   cursor: pointer;
-  filter: invert(0.5);
+  opacity: 1 !important; /* Forțează opacitatea completă */
+  visibility: visible !important; /* Asigură vizibilitatea */
+  display: block !important; /* Asigură că este afișat */
+  filter: invert(0.2); /* Redus de la 0.5 pentru mai multă vizibilitate */
   transition: filter 0.2s ease;
+  width: 16px;
+  height: 16px;
+  margin-left: 4px;
+  padding: 2px;
+  border-radius: 2px;
 }
 
 input[type="datetime-local"]::-webkit-calendar-picker-indicator:hover,
 input[type="time"]::-webkit-calendar-picker-indicator:hover,
 input[type="date"]::-webkit-calendar-picker-indicator:hover {
-  filter: invert(0.3);
+  filter: invert(0); /* Complet vizibil la hover */
+  background-color: rgba(59, 130, 246, 0.1); /* Fundal ușor albastru la hover */
 }
 
 /* Stiluri pentru focus pe input-urile de timp */
@@ -64,34 +73,40 @@ input[type="time"]::-webkit-datetime-edit-minute-field {
   font-weight: inherit;
 }
 
-/* Stiluri pentru calendar dropdown */
+/* Stiluri pentru calendar dropdown - ACTUALIZAT cu iconiţe mai vizibile */
 input[type="datetime-local"]::-webkit-calendar-picker-indicator {
-  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='currentColor' aria-hidden='true'%3e%3cpath fill-rule='evenodd' d='M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z' clip-rule='evenodd'/%3e%3c/svg%3e");
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='%23374151' aria-hidden='true'%3e%3cpath fill-rule='evenodd' d='M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z' clip-rule='evenodd'/%3e%3c/svg%3e");
   background-repeat: no-repeat;
   background-position: center;
-  background-size: 16px 16px;
+  background-size: 14px 14px; /* Mărit ușor pentru mai multă vizibilitate */
   width: 16px;
   height: 16px;
   cursor: pointer;
 }
 
-/* Stiluri pentru time input */
+/* Stiluri pentru time input - ACTUALIZAT cu iconiţe mai vizibile */
 input[type="time"]::-webkit-calendar-picker-indicator {
-  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='currentColor' aria-hidden='true'%3e%3cpath fill-rule='evenodd' d='M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z' clip-rule='evenodd'/%3e%3c/svg%3e");
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='%23374151' aria-hidden='true'%3e%3cpath fill-rule='evenodd' d='M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z' clip-rule='evenodd'/%3e%3c/svg%3e");
+  background-size: 14px 14px; /* Mărit ușor pentru mai multă vizibilitate */
 }
 
-/* Asigură compatibilitatea cu tema întunecată */
+/* Asigură compatibilitatea cu tema întunecată - ACTUALIZAT */
 @media (prefers-color-scheme: dark) {
   input[type="datetime-local"]::-webkit-calendar-picker-indicator,
   input[type="time"]::-webkit-calendar-picker-indicator,
   input[type="date"]::-webkit-calendar-picker-indicator {
-    filter: invert(1);
+    filter: invert(0.8); /* Mai vizibil în tema întunecată */
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='%23ffffff' aria-hidden='true'%3e%3cpath fill-rule='evenodd' d='M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z' clip-rule='evenodd'/%3e%3c/svg%3e");
+  }
+  
+  input[type="time"]::-webkit-calendar-picker-indicator {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='%23ffffff' aria-hidden='true'%3e%3cpath fill-rule='evenodd' d='M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z' clip-rule='evenodd'/%3e%3c/svg%3e");
   }
   
   input[type="datetime-local"]::-webkit-calendar-picker-indicator:hover,
   input[type="time"]::-webkit-calendar-picker-indicator:hover,
   input[type="date"]::-webkit-calendar-picker-indicator:hover {
-    filter: invert(0.8);
+    filter: invert(1); /* Complet alb la hover în tema întunecată */
   }
 }
 
