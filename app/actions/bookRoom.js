@@ -20,9 +20,7 @@ async function bookRoom(previousState, formData) {
     const { databases } = await createSessionClient(sessionCookie.value);
     const { user } = await checkAuth();
 
-    if (!user) {
-      return { error: 'Trebuie sa fiți autentificat ca să faceți o rezervare.' };
-    }
+    if (!user) return { error: 'Trebuie sa fiți autentificat ca să faceți o rezervare.' };
 
     const checkInDate = formData.get('check_in_date');
     const checkInTime = formData.get('check_in_time');
@@ -35,11 +33,11 @@ async function bookRoom(previousState, formData) {
     console.log('User timezone:', userTimezone);
     console.log('Input values:', { checkInDate, checkInTime, checkOutDate, checkOutTime });
 
-    // ✅ Parse inputul exact ca ora locală a utilizatorului
+    // ✅ Parse input exact ca ora locală a utilizatorului
     const checkInLocal = DateTime.fromFormat(
       `${checkInDate}T${checkInTime}`,
       "yyyy-MM-dd'T'HH:mm",
-      { zone: userTimezone, setZone: true }
+      { zone: userTimezone, setZone: true } // ← fixul principal pentru Vercel
     );
 
     const checkOutLocal = DateTime.fromFormat(
@@ -122,9 +120,7 @@ async function bookRoom(previousState, formData) {
       checkOutUTC.toISO()
     );
 
-    if (!isAvailable) {
-      return { error: 'Această sală este deja rezervată pentru perioada selectată' };
-    }
+    if (!isAvailable) return { error: 'Această sală este deja rezervată pentru perioada selectată' };
 
     const bookingData = {
       check_in: checkInUTC.toISO(),
