@@ -382,9 +382,12 @@ export function formatAvailability(availability) {
   // Formatează pentru afișare
   const formatted = [];
   Object.entries(timeGroups).forEach(([timeRange, days]) => {
-    const uniqueDays = [...new Set(days)].sort((a, b) => {
-      // Sortare specială: luni=1, marți=2, ..., duminică=0
-      // Pentru a avea ordinea corectă, tratăm duminica (0) ca pe 7
+    const uniqueDays = [...new Set(days)];
+    
+    // Sortare specială pentru zilele săptămânii
+    // Ordinea dorită: Luni(1), Marți(2), Miercuri(3), Joi(4), Vineri(5), Sâmbătă(6), Duminică(0)
+    uniqueDays.sort((a, b) => {
+      // Convertim duminica (0) la 7 pentru sortare
       const dayA = a === 0 ? 7 : a;
       const dayB = b === 0 ? 7 : b;
       return dayA - dayB;
@@ -392,9 +395,7 @@ export function formatAvailability(availability) {
     
     console.log(`Pentru intervalul ${timeRange}, zile sortate:`, uniqueDays); // Debug
     
-    const dayNames = uniqueDays.map(day => DAYS_REVERSE_MAP[day]);
-    
-    // Încearcă să creeze intervale consecutive de zile
+    // Creează intervale consecutive
     const ranges = [];
     let i = 0;
     
@@ -402,32 +403,59 @@ export function formatAvailability(availability) {
       let start = i;
       let end = i;
       
-      // Pentru a detecta consecutivitate, trebuie să tratăm special duminica
+      // Găsește sfârșitul intervalului consecutiv
       while (end + 1 < uniqueDays.length) {
         const currentDay = uniqueDays[end];
         const nextDay = uniqueDays[end + 1];
         
-        // Verifică consecutivitate normală (1->2, 2->3, etc.)
-        if (nextDay === currentDay + 1) {
-          end++;
-          continue;
+        // Logica de consecutivitate trebuie să trateze special duminica
+        let isConsecutive = false;
+        
+        if (currentDay === 6 && nextDay === 0) {
+          // Cazul special sâmbătă(6) -> duminică(0) (dar în array sortat va fi 6 -> 7)
+          // Acest caz nu se va întâmpla în array-ul sortat pentru că 0 devine 7
+          isConsecutive = false;
+        } else if (currentDay < 7 && nextDay < 7 && nextDay === currentDay + 1) {
+          // Consecutivitate normală (1->2, 2->3, etc.)
+          isConsecutive = true;
+        } else if (currentDay === 6 && nextDay === 7) {
+          // Sâmbătă -> Duminică (în reprezentarea sortată)
+          isConsecutive = true;
         }
         
-        // Verifică cazul special sâmbătă->duminică (6->0, dar în sorted va fi 6->7)
-        if (currentDay === 6 && nextDay === 7) { // 7 este duminica tratată special
+        if (isConsecutive) {
           end++;
-          continue;
+        } else {
+          break;
         }
-        
-        break;
       }
+      
+      // Convertim înapoi pentru afișare
+      const startDay = uniqueDays[start] === 7 ? 0 : uniqueDays[start];
+      const endDay = uniqueDays[end] === 7 ? 0 : uniqueDays[end];
       
       if (end > start) {
         // Interval de zile consecutive
-        ranges.push(`${dayNames[start]}-${dayNames[end]}`);
+        const startName = DAYS_REVERSE_MAP[startDay];
+        const endName = DAYS_REVERSE_MAP[endDay];
+        
+        // Cazuri speciale pentru intervale complete
+        if (uniqueDays.length === 7 && start === 0 && end === 6) {
+          // Toate zilele săptămânii
+          ranges.push('luni-duminică');
+        } else if (startDay === 1 && endDay === 5) {
+          // Zilele de lucru
+          ranges.push('luni-vineri');
+        } else if (startDay === 6 && endDay === 0) {
+          // Weekend
+          ranges.push('sâmbătă-duminică');
+        } else {
+          ranges.push(`${startName}-${endName}`);
+        }
       } else {
         // O singură zi
-        ranges.push(dayNames[start]);
+        const dayName = DAYS_REVERSE_MAP[startDay];
+        ranges.push(dayName);
       }
       
       i = end + 1;
