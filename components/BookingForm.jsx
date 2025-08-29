@@ -3,6 +3,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { useActionState } from 'react';
 import { toast } from 'react-toastify';
+import { DateTime } from 'luxon';
 import bookRoom from '@/app/actions/bookRoom';
 
 const BookingForm = ({ room }) => {
@@ -20,17 +21,20 @@ const BookingForm = ({ room }) => {
     
     console.log('Detected user timezone:', timezone);
     
-    // Setează data și ora minimă la momentul curent în fusul orar local
-    const now = new Date();
+    // ✅ CRITICAL FIX: Folosește Luxon în loc de Date native
+    // Creează "acum" în fusul orar al utilizatorului
+    const now = DateTime.now().setZone(timezone);
     
     // Pentru input de tip datetime-local, avem nevoie de format YYYY-MM-DDTHH:mm
-    const year = now.getFullYear();
-    const month = String(now.getMonth() + 1).padStart(2, '0');
-    const day = String(now.getDate()).padStart(2, '0');
-    const hours = String(now.getHours()).padStart(2, '0');
-    const minutes = String(now.getMinutes()).padStart(2, '0');
+    // Luxon ne dă formatul corect direct
+    const minDateTimeString = now.toFormat("yyyy-MM-dd'T'HH:mm");
     
-    const minDateTimeString = `${year}-${month}-${day}T${hours}:${minutes}`;
+    console.log('=== BOOKING FORM TIMEZONE DEBUG ===');
+    console.log('User timezone:', timezone);
+    console.log('Current time in user timezone:', now.toISO());
+    console.log('Min datetime string for input:', minDateTimeString);
+    console.log('Current time formatted for display:', now.toFormat('dd.MM.yyyy HH:mm'));
+    
     setMinDateTime(minDateTimeString);
   }, []);
 
@@ -52,10 +56,39 @@ const BookingForm = ({ room }) => {
       return;
     }
 
-    // Validare suplimentară pe client
-    const checkIn = new Date(checkInDateTime);
-    const checkOut = new Date(checkOutDateTime);
-    const now = new Date();
+    // ✅ CRITICAL FIX: Folosește Luxon pentru toate validările
+    // Parsează input-urile ca fiind în fusul orar al utilizatorului
+    const checkIn = DateTime.fromFormat(
+      checkInDateTime.replace('T', ' '), 
+      'yyyy-MM-dd HH:mm',
+      { zone: userTimezone }
+    );
+    
+    const checkOut = DateTime.fromFormat(
+      checkOutDateTime.replace('T', ' '), 
+      'yyyy-MM-dd HH:mm',
+      { zone: userTimezone }
+    );
+    
+    const now = DateTime.now().setZone(userTimezone);
+
+    console.log('=== FORM VALIDATION DEBUG ===');
+    console.log('Input check-in string:', checkInDateTime);
+    console.log('Input check-out string:', checkOutDateTime);
+    console.log('Parsed check-in (user tz):', checkIn.toISO());
+    console.log('Parsed check-out (user tz):', checkOut.toISO());
+    console.log('Now (user tz):', now.toISO());
+
+    // Validări folosind Luxon
+    if (!checkIn.isValid) {
+      toast.error('Data și ora de check-in sunt invalide');
+      return;
+    }
+    
+    if (!checkOut.isValid) {
+      toast.error('Data și ora de check-out sunt invalide');
+      return;
+    }
 
     if (checkIn < now) {
       toast.error('Data și ora de check-in nu pot fi în trecut');
@@ -67,18 +100,24 @@ const BookingForm = ({ room }) => {
       return;
     }
 
-    // Calculez diferența în ore
-    const diffHours = (checkOut - checkIn) / (1000 * 60 * 60);
+    // Calculez diferența în ore folosind Luxon
+    const diffHours = checkOut.diff(checkIn, 'hours').hours;
     if (diffHours < 0.5) {
       toast.error('Rezervarea trebuie să fie de cel puțin 30 de minute');
       return;
     }
 
-    // Convertesc înapoi în format separate pentru server
-    const checkInDate = checkInDateTime.split('T')[0];
-    const checkInTime = checkInDateTime.split('T')[1];
-    const checkOutDate = checkOutDateTime.split('T')[0];
-    const checkOutTime = checkOutDateTime.split('T')[1];
+    // ✅ IMPORTANT: Convertim înapoi în format separate pentru server
+    // Folosind Luxon pentru a fi siguri de acuratețea conversiei
+    const checkInDate = checkIn.toFormat('yyyy-MM-dd');
+    const checkInTime = checkIn.toFormat('HH:mm');
+    const checkOutDate = checkOut.toFormat('yyyy-MM-dd');
+    const checkOutTime = checkOut.toFormat('HH:mm');
+
+    console.log('=== SENDING TO SERVER ===');
+    console.log('Check-in date:', checkInDate, 'time:', checkInTime);
+    console.log('Check-out date:', checkOutDate, 'time:', checkOutTime);
+    console.log('User timezone being sent:', userTimezone);
 
     // Creez FormData cu formatul așteptat de server
     const serverFormData = new FormData();
@@ -102,29 +141,36 @@ const BookingForm = ({ room }) => {
       return 'Ora României (unde se află sala)';
     }
     
-    // Calculează diferența de ore față de România
-    const romaniaTime = new Intl.DateTimeFormat('en', {
-      timeZone: 'Europe/Bucharest',
-      hour: '2-digit',
-      hour12: false
-    }).format(new Date());
+    // Calculează diferența de ore față de România folosind Luxon
+    const nowUser = DateTime.now().setZone(userTimezone);
+    const nowRomania = DateTime.now().setZone('Europe/Bucharest');
     
-    const userTime = new Intl.DateTimeFormat('en', {
-      timeZone: userTimezone,
-      hour: '2-digit',
-      hour12: false
-    }).format(new Date());
+    const diffHours = nowRomania.offset - nowUser.offset;
+    const diffHoursActual = Math.round(diffHours / 60); // Convert minutes to hours
     
-    const romaniaHour = parseInt(romaniaTime);
-    const userHour = parseInt(userTime);
-    const diff = romaniaHour - userHour;
-    
-    if (diff === 0) {
+    if (diffHoursActual === 0) {
       return `${userTimezone} (aceeași oră cu România)`;
-    } else if (diff > 0) {
-      return `${userTimezone} (România este cu ${diff}h înaintea dvs.)`;
+    } else if (diffHoursActual > 0) {
+      return `${userTimezone} (România este cu ${diffHoursActual}h înaintea dvs.)`;
     } else {
-      return `${userTimezone} (România este cu ${Math.abs(diff)}h în urma dvs.)`;
+      return `${userTimezone} (România este cu ${Math.abs(diffHoursActual)}h în urma dvs.)`;
+    }
+  };
+
+  // ✅ Funcție helper pentru a formata timpul în fusul utilizatorului
+  const formatTimeInUserTimezone = (timeString) => {
+    if (!timeString || !userTimezone) return timeString;
+    
+    try {
+      // Parsează availability-ul ca fiind în fusul României
+      const romaniaTime = DateTime.fromFormat(timeString, 'HH:mm', { zone: 'Europe/Bucharest' });
+      
+      // Convertește la fusul utilizatorului pentru afișare
+      const userTime = romaniaTime.setZone(userTimezone);
+      
+      return userTime.toFormat('HH:mm');
+    } catch (error) {
+      return timeString; // fallback la string-ul original
     }
   };
 
@@ -138,7 +184,7 @@ const BookingForm = ({ room }) => {
           <p className="text-sm text-yellow-800">
             <strong>📍 Atenție:</strong> Fusul dvs. orar: {getTimezoneInfo()}
             <br />
-            Orele afișate sunt în fusul dvs. local, dar validarea se face conform programului sălii din România.
+            Orele afișate în formular sunt în fusul dvs. local, dar validarea se face conform programului sălii din România.
           </p>
         </div>
       )}
@@ -169,6 +215,11 @@ const BookingForm = ({ room }) => {
                 : `Program sala (ora României): ${room.availability || 'Disponibil oricând'}`
               }
             </p>
+            {userTimezone && userTimezone !== 'Europe/Bucharest' && room.availability && (
+              <p className='text-xs text-blue-600 mt-1'>
+                În fusul dvs.: {room.availability} (aproximativ - verificați la rezervare)
+              </p>
+            )}
           </div>
           
           <div>
@@ -211,6 +262,11 @@ const BookingForm = ({ room }) => {
             <li>Orele afișate în formular sunt în fusul dvs. local</li>
             <li>Validarea disponibilității se face conform programului sălii (ora României)</li>
             <li>Rezervarea trebuie să respecte programul de disponibilitate al sălii</li>
+            {userTimezone && userTimezone !== 'Europe/Bucharest' && (
+              <li className="text-orange-600">
+                <strong>Important:</strong> Conversia automată la ora României poate avea mici diferențe - verificați cu atenție orele selectate
+              </li>
+            )}
           </ul>
         </div>
       </form>
