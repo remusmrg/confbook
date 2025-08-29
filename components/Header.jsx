@@ -229,27 +229,28 @@ const Header = () => {
                 <FaBuilding className='inline mr-2' /> Sălile mele
               </Link>
               
+              <Link href='/account' className='text-gray-800 hover:underline'>
+                <FaCog className='inline mr-2' /> Contul meu
+              </Link>
+              
+              {/* Admin link pentru mobile */}
+              {isAdmin && (
+                <Link href='/admin' className='text-red-600 hover:underline'>
+                  <FaUserShield className='inline mr-2' /> Panou administrativ
+                </Link>
+              )}
+              
               {/* Mobile dropdown content */}
               {dropdownOpen && (
                 <div className='w-full bg-gray-50 rounded-lg p-3 space-y-2'>
+                  <p className='text-sm text-gray-600 font-medium'>Opțiuni suplimentare:</p>
                   <Link 
                     href='/account' 
                     onClick={closeDropdown}
-                    className='block text-gray-800 hover:underline'
+                    className='block text-blue-600 hover:underline text-sm'
                   >
-                    <FaCog className='inline mr-2' /> Contul meu
+                    <FaCog className='inline mr-2' /> Setări avansate cont
                   </Link>
-                  
-                  {/* Admin link pentru mobile */}
-                  {isAdmin && (
-                    <Link 
-                      href='/admin' 
-                      onClick={closeDropdown}
-                      className='block text-red-600 hover:underline'
-                    >
-                      <FaUserShield className='inline mr-2' /> Panou administrativ
-                    </Link>
-                  )}
                 </div>
               )}
               
