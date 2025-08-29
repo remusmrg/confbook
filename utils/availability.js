@@ -33,29 +33,36 @@ const DAYS_REVERSE_MAP = {
 };
 
 /**
+ * Normalizează un nume de zi - elimină diacriticele și face lowercase
+ */
+function normalizeDay(day) {
+  return day.toLowerCase()
+    .trim()
+    .replace(/ă/g, 'a')
+    .replace(/â/g, 'a')
+    .replace(/î/g, 'i')
+    .replace(/ș/g, 's')
+    .replace(/ț/g, 't');
+}
+
+/**
  * Parsează un interval de zile (ex: "luni-vineri")
  */
 function parseDayRange(dayRange) {
-  // Normalizează string-ul - elimină diacriticele și face lowercase
-  const normalizeDay = (day) => {
-    return day.toLowerCase()
-      .trim()
-      .replace(/ă/g, 'a')
-      .replace(/â/g, 'a')
-      .replace(/î/g, 'i')
-      .replace(/ș/g, 's')
-      .replace(/ț/g, 't');
-  };
-
   const range = normalizeDay(dayRange);
   
   if (range.includes('-')) {
-    const [start, end] = range.split('-').map(d => normalizeDay(d));
+    const parts = range.split('-');
+    if (parts.length !== 2) {
+      throw new Error(`Format invalid pentru intervalul de zile: ${dayRange}`);
+    }
+    
+    const [start, end] = parts.map(d => normalizeDay(d));
     const startDay = DAYS_MAP[start];
     const endDay = DAYS_MAP[end];
     
     if (startDay === undefined || endDay === undefined) {
-      throw new Error(`Zi invalidă în intervalul: ${dayRange}`);
+      throw new Error(`Zi invalidă în intervalul: ${dayRange} (start: ${start}, end: ${end})`);
     }
     
     const days = [];
@@ -107,6 +114,23 @@ function parseTimeRange(timeRange) {
 }
 
 /**
+ * Splitează string-ul de disponibilitate în segmente, fiind atent la virgulele din intervale
+ */
+function smartSplitAvailability(availabilityString) {
+  // Strategie simplă: split după pattern de timp urmat de virgulă și spațiu
+  const segments = [];
+  const parts = availabilityString.split(/(?<=\d{2}:\d{2})\s*,\s*(?=\w)/);
+  
+  for (const part of parts) {
+    if (part.trim()) {
+      segments.push(part.trim());
+    }
+  }
+  
+  return segments.length > 0 ? segments : [availabilityString.trim()];
+}
+
+/**
  * Parsează string-ul complet de disponibilitate
  */
 export function parseAvailability(availabilityString) {
@@ -115,22 +139,39 @@ export function parseAvailability(availabilityString) {
   }
   
   try {
-    // Împarte după virgulă pentru multiple intervale
-    const segments = availabilityString.split(',').map(s => s.trim());
+    // Folosește funcția de split inteligentă
+    const segments = smartSplitAvailability(availabilityString);
     const availability = [];
     
+    console.log('String original:', availabilityString); // Debug
+    console.log('Segmente detectate:', segments); // Debug
+    
     for (const segment of segments) {
-      // Găsește ultimul interval orar din segment
-      const timeMatch = segment.match(/(\d{1,2}:\d{2}-\d{1,2}:\d{2})$/);
+      if (!segment.trim()) continue;
+      
+      // Găsește ultimul interval orar din segment folosind regex mai strict
+      const timeMatch = segment.match(/\s(\d{1,2}:\d{2}-\d{1,2}:\d{2})$/);
       if (!timeMatch) {
-        continue; // Skip segments fără format orar valid
+        console.warn(`Segment fără format orar valid: "${segment}"`);
+        continue;
       }
       
       const timeRange = timeMatch[1];
-      const daysPart = segment.replace(timeRange, '').trim();
+      const daysPart = segment.replace(timeMatch[0], '').trim(); // Înlătură spațiul și timpul
+      
+      console.log(`Procesez segment: "${segment}"`); // Debug
+      console.log(`-> Zile: "${daysPart}"`); // Debug 
+      console.log(`-> Timp: "${timeRange}"`); // Debug
+      
+      if (!daysPart) {
+        console.warn(`Nu s-au găsit zile în segmentul: "${segment}"`);
+        continue;
+      }
       
       const days = parseDayRange(daysPart);
       const time = parseTimeRange(timeRange);
+      
+      console.log(`Zile parsate:`, days); // Debug
       
       for (const day of days) {
         availability.push({
@@ -143,9 +184,11 @@ export function parseAvailability(availabilityString) {
       }
     }
     
+    console.log('Disponibilitate finală:', availability); // Debug
     return availability;
   } catch (error) {
     console.error('Eroare la parsarea disponibilității:', error);
+    console.error('String-ul problematic:', availabilityString);
     return []; // Returnează array gol în caz de eroare
   }
 }
@@ -248,39 +291,44 @@ export function formatAvailability(availability) {
     return 'Întotdeauna disponibil';
   }
   
-  // Grupează după zile
-  const dayGroups = {};
+  // Grupează după intervale orare
+  const timeGroups = {};
   availability.forEach(avail => {
     const key = `${avail.startHour}:${avail.startMinute.toString().padStart(2, '0')}-${avail.endHour}:${avail.endMinute.toString().padStart(2, '0')}`;
-    if (!dayGroups[key]) {
-      dayGroups[key] = [];
+    if (!timeGroups[key]) {
+      timeGroups[key] = [];
     }
-    dayGroups[key].push(avail.day);
+    timeGroups[key].push(avail.day);
   });
   
   // Formatează pentru afișare
   const formatted = [];
-  Object.entries(dayGroups).forEach(([timeRange, days]) => {
-    const sortedDays = days.sort((a, b) => a - b);
-    const dayNames = sortedDays.map(day => DAYS_REVERSE_MAP[day]);
+  Object.entries(timeGroups).forEach(([timeRange, days]) => {
+    const uniqueDays = [...new Set(days)].sort((a, b) => a - b);
+    const dayNames = uniqueDays.map(day => DAYS_REVERSE_MAP[day]);
     
-    // Încearcă să creeze intervale de zile
+    // Încearcă să creeze intervale consecutive de zile
     const ranges = [];
-    let start = 0;
+    let i = 0;
     
-    while (start < sortedDays.length) {
-      let end = start;
-      while (end + 1 < sortedDays.length && sortedDays[end + 1] === sortedDays[end] + 1) {
+    while (i < uniqueDays.length) {
+      let start = i;
+      let end = i;
+      
+      // Găsește sfârșitul intervalului consecutiv
+      while (end + 1 < uniqueDays.length && uniqueDays[end + 1] === uniqueDays[end] + 1) {
         end++;
       }
       
       if (end > start) {
+        // Interval de zile consecutive
         ranges.push(`${dayNames[start]}-${dayNames[end]}`);
       } else {
+        // O singură zi
         ranges.push(dayNames[start]);
       }
       
-      start = end + 1;
+      i = end + 1;
     }
     
     formatted.push(`${ranges.join(', ')} ${timeRange}`);
