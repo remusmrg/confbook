@@ -15,7 +15,8 @@ import {
   FaCalendarCheck,
   FaHome,
   FaCog,
-  FaChevronDown
+  FaChevronDown,
+  FaUserShield
 } from 'react-icons/fa';
 import { toast } from 'react-toastify';
 import destroySession from '@/app/actions/destroySession';
@@ -23,7 +24,7 @@ import { useAuth } from '@/context/authContext';
 
 const Header = () => {
   const router = useRouter();
-  const { isAuthenticated, setIsAuthenticated, currentUser, setCurrentUser } = useAuth();
+  const { isAuthenticated, setIsAuthenticated, currentUser, setCurrentUser, isAdmin } = useAuth();
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
   const handleLogout = async () => {
@@ -118,7 +119,10 @@ const Header = () => {
                   <span className='mr-1'>
                     {currentUser?.name || currentUser?.email || 'Utilizator'}
                   </span>
-                  <FaChevronDown className={`transition-transform ${dropdownOpen ? 'rotate-180' : ''}`} />
+                  {isAdmin && (
+                    <FaUserShield className='ml-1 text-red-500' title='Administrator' />
+                  )}
+                  <FaChevronDown className={`ml-1 transition-transform ${dropdownOpen ? 'rotate-180' : ''}`} />
                 </button>
 
                 {/* Dropdown menu */}
@@ -128,6 +132,7 @@ const Header = () => {
                     <div className='px-4 py-2 border-b border-gray-100'>
                       <p className='text-sm font-medium text-gray-800'>
                         {currentUser?.name || 'Utilizator'}
+                        {isAdmin && <span className='ml-2 text-red-500 text-xs'>Admin</span>}
                       </p>
                       <p className='text-sm text-gray-600'>
                         {currentUser?.email}
@@ -152,6 +157,18 @@ const Header = () => {
                       <FaBuilding className='mr-3' />
                       Sălile mele
                     </Link>
+
+                    {/* Admin link - doar pentru administratori */}
+                    {isAdmin && (
+                      <Link
+                        href='/admin'
+                        onClick={closeDropdown}
+                        className='flex items-center px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors'
+                      >
+                        <FaUserShield className='mr-3' />
+                        Panou administrativ
+                      </Link>
+                    )}
 
                     <div className='border-t border-gray-100 mt-2 pt-2'>
                       <button
@@ -178,6 +195,7 @@ const Header = () => {
                 <span className='text-gray-800 font-semibold'>
                   <FaUser className='inline mr-1' />
                   {currentUser?.name || currentUser?.email || 'User'}
+                  {isAdmin && <FaUserShield className='ml-2 text-red-500' />}
                 </span>
               )}
             </div>
@@ -221,6 +239,17 @@ const Header = () => {
                   >
                     <FaCog className='inline mr-2' /> Contul meu
                   </Link>
+                  
+                  {/* Admin link pentru mobile */}
+                  {isAdmin && (
+                    <Link 
+                      href='/admin' 
+                      onClick={closeDropdown}
+                      className='block text-red-600 hover:underline'
+                    >
+                      <FaUserShield className='inline mr-2' /> Panou administrativ
+                    </Link>
+                  )}
                 </div>
               )}
               

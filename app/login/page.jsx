@@ -10,7 +10,7 @@ import { useAuth } from '@/context/authContext';
 
 const LoginPage = () => {
   const [state, formAction] = useActionState(createSession, {});
-  const { setIsAuthenticated, setCurrentUser } = useAuth();
+  const { setIsAuthenticated, setCurrentUser, setIsAdmin } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
@@ -21,13 +21,14 @@ const LoginPage = () => {
         const { isAuthenticated, user } = await checkAuth();
         setIsAuthenticated(isAuthenticated);
         setCurrentUser(user);
+        setIsAdmin(user && user.labels && user.labels.includes('admin'));
         toast.success('Autentificare reușită!');
         router.push('/');
       }
     };
 
     handleLogin();
-  }, [state, setIsAuthenticated, setCurrentUser, router]);
+  }, [state, setIsAuthenticated, setCurrentUser, setIsAdmin, router]);
 
   return (
     <div className='flex items-center justify-center min-h-screen'>
