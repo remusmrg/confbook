@@ -294,17 +294,28 @@ export function formatAvailability(availability) {
   // Grupează după intervale orare
   const timeGroups = {};
   availability.forEach(avail => {
-    const key = `${avail.startHour}:${avail.startMinute.toString().padStart(2, '0')}-${avail.endHour}:${avail.endMinute.toString().padStart(2, '0')}`;
+    const key = `${avail.startHour.toString().padStart(2, '0')}:${avail.startMinute.toString().padStart(2, '0')}-${avail.endHour.toString().padStart(2, '0')}:${avail.endMinute.toString().padStart(2, '0')}`;
     if (!timeGroups[key]) {
       timeGroups[key] = [];
     }
     timeGroups[key].push(avail.day);
   });
   
+  console.log('Time groups pentru formatare:', timeGroups); // Debug
+  
   // Formatează pentru afișare
   const formatted = [];
   Object.entries(timeGroups).forEach(([timeRange, days]) => {
-    const uniqueDays = [...new Set(days)].sort((a, b) => a - b);
+    const uniqueDays = [...new Set(days)].sort((a, b) => {
+      // Sortare specială: luni=1, marți=2, ..., duminică=0
+      // Pentru a avea ordinea corectă, tratăm duminica (0) ca pe 7
+      const dayA = a === 0 ? 7 : a;
+      const dayB = b === 0 ? 7 : b;
+      return dayA - dayB;
+    });
+    
+    console.log(`Pentru intervalul ${timeRange}, zile sortate:`, uniqueDays); // Debug
+    
     const dayNames = uniqueDays.map(day => DAYS_REVERSE_MAP[day]);
     
     // Încearcă să creeze intervale consecutive de zile
@@ -315,9 +326,24 @@ export function formatAvailability(availability) {
       let start = i;
       let end = i;
       
-      // Găsește sfârșitul intervalului consecutiv
-      while (end + 1 < uniqueDays.length && uniqueDays[end + 1] === uniqueDays[end] + 1) {
-        end++;
+      // Pentru a detecta consecutivitate, trebuie să tratăm special duminica
+      while (end + 1 < uniqueDays.length) {
+        const currentDay = uniqueDays[end];
+        const nextDay = uniqueDays[end + 1];
+        
+        // Verifică consecutivitate normală (1->2, 2->3, etc.)
+        if (nextDay === currentDay + 1) {
+          end++;
+          continue;
+        }
+        
+        // Verifică cazul special sâmbătă->duminică (6->0, dar în sorted va fi 6->7)
+        if (currentDay === 6 && nextDay === 7) { // 7 este duminica tratată special
+          end++;
+          continue;
+        }
+        
+        break;
       }
       
       if (end > start) {
@@ -331,6 +357,7 @@ export function formatAvailability(availability) {
       i = end + 1;
     }
     
+    console.log(`Ranges create pentru ${timeRange}:`, ranges); // Debug
     formatted.push(`${ranges.join(', ')} ${timeRange}`);
   });
   
