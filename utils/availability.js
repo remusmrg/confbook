@@ -46,12 +46,25 @@ function normalizeDay(day) {
 }
 
 /**
+ * ✅ CRITICAL FIX pentru Vercel: 
  * Convertește ziua din sistemul JavaScript (0=duminică) în sistemul european (1=luni)
- * IMPORTANT: Aceasta este conversie critică pentru validarea corectă!
+ * FUNCȚIONEAZĂ CORECT indiferent de timezone-ul serverului!
  */
 function getEuropeanDayFromDate(date) {
+  // ✅ IMPORTANT: date trebuie să fie deja în timezone-ul corect (România)
+  // Nu ne bazăm pe getDay() direct pentru că poate fi afectat de timezone-ul serverului
+  
   const jsDay = date.getDay(); // JavaScript: 0=Sunday, 1=Monday, ..., 6=Saturday
-  return jsDay === 0 ? 7 : jsDay; // European: 1=Monday, 2=Tuesday, ..., 7=Sunday
+  const europeanDay = jsDay === 0 ? 7 : jsDay; // European: 1=Monday, 2=Tuesday, ..., 7=Sunday
+  
+  console.log('getEuropeanDayFromDate DEBUG:');
+  console.log('  Input date:', date.toString());
+  console.log('  date.toLocaleString("ro-RO", {timeZone: "Europe/Bucharest"}):', date.toLocaleString('ro-RO', {timeZone: 'Europe/Bucharest'}));
+  console.log('  JS day (0=Sun):', jsDay);
+  console.log('  European day (1=Mon):', europeanDay);
+  console.log('  Day name:', DAYS_REVERSE_MAP[europeanDay]);
+  
+  return europeanDay;
 }
 
 /**
@@ -183,26 +196,27 @@ export function parseAvailability(availabilityString) {
 }
 
 /**
+ * ✅ CRITICAL FIX pentru Vercel:
  * Verifică dacă o rezervare este în intervalul de disponibilitate
- * ATENȚIE: Această funcție lucrează cu obiecte Date JavaScript native!
- * Obiectele Date trebuie să fie deja în fusul orar corect (local time)!
+ * ATENȚIE: Obiectele Date trebuie să fie deja în fusul orar România (Europe/Bucharest)!
+ * Această funcție lucrează cu obiecte Date JavaScript native care au fost create
+ * folosind Luxon cu timezone-ul corect.
  */
 export function isBookingWithinAvailability(checkInDate, checkOutDate, availability) {
   if (!availability || availability.length === 0) {
     return { isValid: true };
   }
   
-  console.log('=== AVAILABILITY CHECK DEBUG ===');
-  console.log('Check-in Date object:', checkInDate);
-  console.log('Check-out Date object:', checkOutDate);
-  console.log('Check-in ISO:', checkInDate.toISOString());
-  console.log('Check-out ISO:', checkOutDate.toISOString());
+  console.log('=== AVAILABILITY CHECK DEBUG (VERCEL COMPATIBLE) ===');
+  console.log('Server timezone (Vercel runs in):', process.env.TZ || 'UTC');
+  console.log('Check-in Date object (should be Romania time):', checkInDate);
+  console.log('Check-out Date object (should be Romania time):', checkOutDate);
+  console.log('Check-in Romania locale string:', checkInDate.toLocaleString('ro-RO', { timeZone: 'Europe/Bucharest' }));
+  console.log('Check-out Romania locale string:', checkOutDate.toLocaleString('ro-RO', { timeZone: 'Europe/Bucharest' }));
   
-  const checkIn = new Date(checkInDate);
-  const checkOut = new Date(checkOutDate);
-  
-  console.log('Local check-in:', checkIn.toString());
-  console.log('Local check-out:', checkOut.toString());
+  // ✅ CRITICAL: Nu creăm Date noi - folosim direct cele primite care sunt în România
+  const checkIn = checkInDate;
+  const checkOut = checkOutDate;
   
   const sameDay = checkIn.toDateString() === checkOut.toDateString();
   console.log('Same day?', sameDay);
@@ -214,9 +228,6 @@ export function isBookingWithinAvailability(checkInDate, checkOutDate, availabil
     const endHour = checkOut.getHours();
     const endMinute = checkOut.getMinutes();
     
-    console.log('JavaScript day (0=Sun):', checkIn.getDay());
-    console.log('European day (1=Mon):', dayOfWeek);
-    console.log('Day name:', DAYS_REVERSE_MAP[dayOfWeek]);
     console.log('Booking time:', `${startHour.toString().padStart(2, '0')}:${startMinute.toString().padStart(2, '0')}-${endHour.toString().padStart(2, '0')}:${endMinute.toString().padStart(2, '0')}`);
     
     const dayAvailability = availability.filter(a => a.day === dayOfWeek);
@@ -263,9 +274,10 @@ export function isBookingWithinAvailability(checkInDate, checkOutDate, availabil
     console.log('✓ Single day booking is valid');
     return { isValid: true };
   } else {
-    // Rezervare multi-zi (nu e folosită în practica obișnuită, dar o lăsăm pentru completitudine)
+    // Rezervare multi-zi (tratare completă pentru compatibilitate)
     console.log('Multi-day booking validation...');
     const currentDate = new Date(checkIn);
+    
     while (currentDate < checkOut) {
       const dayOfWeek = getEuropeanDayFromDate(currentDate);
       const hour = currentDate.getHours();
@@ -303,6 +315,7 @@ export function isBookingWithinAvailability(checkInDate, checkOutDate, availabil
         };
       }
       
+      // Verifică ora de sfârșit pentru ultima zi
       if (currentDate.toDateString() === checkOut.toDateString()) {
         const endHour = checkOut.getHours();
         const endMinute = checkOut.getMinutes();

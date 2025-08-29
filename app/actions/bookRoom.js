@@ -29,32 +29,36 @@ async function bookRoom(previousState, formData) {
     const roomId = formData.get('room_id');
     const userTimezone = formData.get('user_timezone') || 'Europe/Bucharest';
 
-    console.log('=== BOOKING TIMEZONE DEBUG ===');
+    console.log('=== BOOKING TIMEZONE DEBUG (VERCEL FIXED) ===');
     console.log('User timezone:', userTimezone);
+    console.log('Server timezone (process.env.TZ):', process.env.TZ);
     console.log('Input values:', { checkInDate, checkInTime, checkOutDate, checkOutTime });
 
-    // ✅ Parse input exact ca ora locală a utilizatorului
+    // ✅ CRITICAL FIX: Crează DateTime-uri explicite în fusul orar al utilizatorului
+    // Aceasta funcționează și pe Vercel unde serverul e în UTC
     const checkInLocal = DateTime.fromFormat(
-      `${checkInDate}T${checkInTime}`,
-      "yyyy-MM-dd'T'HH:mm",
-      { zone: userTimezone, setZone: true } // ← fixul principal pentru Vercel
+      `${checkInDate} ${checkInTime}`,
+      'yyyy-MM-dd HH:mm',
+      { zone: userTimezone }
     );
 
     const checkOutLocal = DateTime.fromFormat(
-      `${checkOutDate}T${checkOutTime}`,
-      "yyyy-MM-dd'T'HH:mm",
-      { zone: userTimezone, setZone: true }
+      `${checkOutDate} ${checkOutTime}`,
+      'yyyy-MM-dd HH:mm',
+      { zone: userTimezone }
     );
 
-    // ✅ Conversie pentru validarea disponibilității în fusul României
+    // ✅ Pentru validarea disponibilității, ÎNTOTDEAUNA convertim la Romania
     const checkInRomania = checkInLocal.setZone('Europe/Bucharest');
     const checkOutRomania = checkOutLocal.setZone('Europe/Bucharest');
+    
+    // ✅ "Acum" în România pentru validarea "în trecut"
     const nowRomania = DateTime.now().setZone('Europe/Bucharest');
 
     console.log('checkInLocal (user tz):', checkInLocal.toISO());
     console.log('checkOutLocal (user tz):', checkOutLocal.toISO());
-    console.log('checkInRomania:', checkInRomania.toISO());
-    console.log('checkOutRomania:', checkOutRomania.toISO());
+    console.log('checkInRomania (validation tz):', checkInRomania.toISO());
+    console.log('checkOutRomania (validation tz):', checkOutRomania.toISO());
     console.log('nowRomania:', nowRomania.toISO());
 
     // ✅ Validări
@@ -75,16 +79,20 @@ async function bookRoom(previousState, formData) {
       return { error: 'Sala nu a fost găsită' };
     }
 
-    // ✅ Validare disponibilitate (România)
+    // ✅ Validare disponibilitate - FOLOSEȘTE ORELE DIN ROMÂNIA!
     if (room.availability) {
       const availability = parseAvailability(room.availability);
 
+      // ✅ CRITICAL: Convertește la JavaScript Date în fusul României
+      // pentru că funcția isBookingWithinAvailability lucrează cu Date native
       const checkInRomaniaJS = checkInRomania.toJSDate();
       const checkOutRomaniaJS = checkOutRomania.toJSDate();
 
-      console.log('=== AVAILABILITY VALIDATION ===');
-      console.log('checkInRomaniaJS:', checkInRomaniaJS);
-      console.log('checkOutRomaniaJS:', checkOutRomaniaJS);
+      console.log('=== AVAILABILITY VALIDATION (ROMANIA TIME) ===');
+      console.log('checkInRomaniaJS:', checkInRomaniaJS.toLocaleString('ro-RO', { timeZone: 'Europe/Bucharest' }));
+      console.log('checkOutRomaniaJS:', checkOutRomaniaJS.toLocaleString('ro-RO', { timeZone: 'Europe/Bucharest' }));
+      console.log('JS Date getHours() for check-in:', checkInRomaniaJS.getHours());
+      console.log('JS Date getMinutes() for check-in:', checkInRomaniaJS.getMinutes());
 
       const availabilityCheck = isBookingWithinAvailability(
         checkInRomaniaJS,
@@ -95,14 +103,15 @@ async function bookRoom(previousState, formData) {
       console.log('availabilityCheck result:', availabilityCheck);
 
       if (!availabilityCheck.isValid) {
-        const userCheckInTime = checkInLocal.toFormat('HH:mm');
-        const userCheckOutTime = checkOutLocal.toFormat('HH:mm');
-        const romaniaCheckInTime = checkInRomania.toFormat('HH:mm');
-        const romaniaCheckOutTime = checkOutRomania.toFormat('HH:mm');
-
         let errorMessage = availabilityCheck.message;
 
+        // ✅ Afișează orele în fusul utilizatorului pentru claritate
         if (userTimezone !== 'Europe/Bucharest') {
+          const userCheckInTime = checkInLocal.toFormat('HH:mm');
+          const userCheckOutTime = checkOutLocal.toFormat('HH:mm');
+          const romaniaCheckInTime = checkInRomania.toFormat('HH:mm');
+          const romaniaCheckOutTime = checkOutRomania.toFormat('HH:mm');
+
           errorMessage += ` (Orele selectate ${userCheckInTime}-${userCheckOutTime} în fusul dvs. corespund cu ${romaniaCheckInTime}-${romaniaCheckOutTime} ora României)`;
         }
 
@@ -110,10 +119,15 @@ async function bookRoom(previousState, formData) {
       }
     }
 
-    // ✅ Convertim în UTC pentru DB
+    // ✅ CRITICAL: Pentru baza de date, ÎNTOTDEAUNA salvează în UTC
     const checkInUTC = checkInLocal.toUTC();
     const checkOutUTC = checkOutLocal.toUTC();
 
+    console.log('=== FINAL UTC STORAGE ===');
+    console.log('checkInUTC pentru DB:', checkInUTC.toISO());
+    console.log('checkOutUTC pentru DB:', checkOutUTC.toISO());
+
+    // ✅ Verifică disponibilitatea pentru rezervări existente
     const isAvailable = await checkRoomAvailability(
       roomId,
       checkInUTC.toISO(),
@@ -122,12 +136,16 @@ async function bookRoom(previousState, formData) {
 
     if (!isAvailable) return { error: 'Această sală este deja rezervată pentru perioada selectată' };
 
+    // ✅ Salvează în baza de date în UTC
     const bookingData = {
       check_in: checkInUTC.toISO(),
       check_out: checkOutUTC.toISO(),
       user_id: user.id,
       room_id: roomId,
     };
+
+    console.log('=== SAVING TO DATABASE ===');
+    console.log('bookingData:', bookingData);
 
     await databases.createDocument(
       process.env.NEXT_PUBLIC_APPWRITE_DATABASE,
