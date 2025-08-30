@@ -1,5 +1,7 @@
 // utils/availability.js
 
+import { DateTime } from 'luxon';
+
 /**
  * Parsează string-ul de disponibilitate în format structurat
  * Acceptă formate ca:
@@ -46,7 +48,6 @@ function normalizeDay(day) {
 }
 
 /**
- * ✅ FIX pentru Vercel:
  * Convertește ziua folosind explicit timezone-ul Europe/Bucharest
  */
 function getEuropeanDayFromDate(date) {
@@ -188,26 +189,32 @@ export function parseAvailability(availabilityString) {
 /**
  * Verifică dacă o rezervare este în intervalul de disponibilitate
  */
-export function isBookingWithinAvailability(checkInDate, checkOutDate, availability) {
+export function isBookingWithinAvailability(checkIn, checkOut, availability) {
   if (!availability || availability.length === 0) {
     return { isValid: true };
   }
 
+  // Ensure inputs are DateTime objects in Europe/Bucharest
+  const checkInBucharest = checkIn instanceof DateTime
+    ? checkIn.setZone('Europe/Bucharest')
+    : DateTime.fromJSDate(checkIn, { zone: 'Europe/Bucharest' });
+  const checkOutBucharest = checkOut instanceof DateTime
+    ? checkOut.setZone('Europe/Bucharest')
+    : DateTime.fromJSDate(checkOut, { zone: 'Europe/Bucharest' });
+
   console.log('=== AVAILABILITY CHECK DEBUG (VERCEL COMPATIBLE) ===');
-  console.log('Check-in Romania locale string:', checkInDate.toLocaleString('ro-RO', { timeZone: 'Europe/Bucharest' }));
-  console.log('Check-out Romania locale string:', checkOutDate.toLocaleString('ro-RO', { timeZone: 'Europe/Bucharest' }));
+  console.log('Check-in Bucharest:', checkInBucharest.toISO());
+  console.log('Check-out Bucharest:', checkOutBucharest.toISO());
 
-  const checkIn = checkInDate;
-  const checkOut = checkOutDate;
-
-  const sameDay = checkIn.toDateString() === checkOut.toDateString();
+  // Check if booking is on the same day
+  const sameDay = checkInBucharest.startOf('day').equals(checkOutBucharest.startOf('day'));
 
   if (sameDay) {
-    const dayOfWeek = getEuropeanDayFromDate(checkIn);
-    const startHour = checkIn.getHours();
-    const startMinute = checkIn.getMinutes();
-    const endHour = checkOut.getHours();
-    const endMinute = checkOut.getMinutes();
+    const dayOfWeek = getEuropeanDayFromDate(checkInBucharest.toJSDate());
+    const startHour = checkInBucharest.hour;
+    const startMinute = checkInBucharest.minute;
+    const endHour = checkOutBucharest.hour;
+    const endMinute = checkOutBucharest.minute;
 
     const dayAvailability = availability.filter(a => a.day === dayOfWeek);
 
@@ -232,9 +239,11 @@ export function isBookingWithinAvailability(checkInDate, checkOutDate, availabil
     }
 
     if (!isValid) {
-      const availTimes = dayAvailability.map(a =>
-        `${a.startHour.toString().padStart(2, '0')}:${a.startMinute.toString().padStart(2, '0')}-${a.endHour.toString().padStart(2, '0')}:${a.endMinute.toString().padStart(2, '0')}`
-      ).join(', ');
+      const availTimes = dayAvailability
+        .map(a =>
+          `${a.startHour.toString().padStart(2, '0')}:${a.startMinute.toString().padStart(2, '0')}-${a.endHour.toString().padStart(2, '0')}:${a.endMinute.toString().padStart(2, '0')}`
+        )
+        .join(', ');
 
       return {
         isValid: false,
@@ -244,12 +253,12 @@ export function isBookingWithinAvailability(checkInDate, checkOutDate, availabil
 
     return { isValid: true };
   } else {
-    const currentDate = new Date(checkIn);
+    let currentDate = checkInBucharest.startOf('day');
 
-    while (currentDate < checkOut) {
-      const dayOfWeek = getEuropeanDayFromDate(currentDate);
-      const hour = currentDate.getHours();
-      const minute = currentDate.getMinutes();
+    while (currentDate <= checkOutBucharest.startOf('day')) {
+      const dayOfWeek = getEuropeanDayFromDate(currentDate.toJSDate());
+      const isCheckInDay = currentDate.startOf('day').equals(checkInBucharest.startOf('day'));
+      const isCheckOutDay = currentDate.startOf('day').equals(checkOutBucharest.startOf('day'));
 
       const dayAvailability = availability.filter(a => a.day === dayOfWeek);
 
@@ -264,55 +273,42 @@ export function isBookingWithinAvailability(checkInDate, checkOutDate, availabil
       for (const avail of dayAvailability) {
         const startMinutes = avail.startHour * 60 + avail.startMinute;
         const endMinutes = avail.endHour * 60 + avail.endMinute;
-        const currentMinutes = hour * 60 + minute;
 
-        if (currentMinutes >= startMinutes && currentMinutes < endMinutes) {
+        if (isCheckInDay) {
+          const currentMinutes = checkInBucharest.hour * 60 + checkInBucharest.minute;
+          if (currentMinutes >= startMinutes && currentMinutes < endMinutes) {
+            isTimeValid = true;
+          }
+        } else if (isCheckOutDay) {
+          const currentMinutes = checkOutBucharest.hour * 60 + checkOutBucharest.minute;
+          if (currentMinutes > startMinutes && currentMinutes <= endMinutes) {
+            isTimeValid = true;
+          }
+        } else {
+          // For full days, assume any availability is valid
           isTimeValid = true;
-          break;
         }
+
+        if (isTimeValid) break;
       }
 
       if (!isTimeValid) {
-        const availTimes = dayAvailability.map(a =>
-          `${a.startHour.toString().padStart(2, '0')}:${a.startMinute.toString().padStart(2, '0')}-${a.endHour.toString().padStart(2, '0')}:${a.endMinute.toString().padStart(2, '0')}`
-        ).join(', ');
+        const availTimes = dayAvailability
+          .map(a =>
+            `${a.startHour.toString().padStart(2, '0')}:${a.startMinute.toString().padStart(2, '0')}-${a.endHour.toString().padStart(2, '0')}:${a.endMinute.toString().padStart(2, '0')}`
+          )
+          .join(', ');
+
+        const currentHour = isCheckInDay ? checkInBucharest.hour : checkOutBucharest.hour;
+        const currentMinute = isCheckInDay ? checkInBucharest.minute : checkOutBucharest.minute;
 
         return {
           isValid: false,
-          message: `Ora ${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')} ${DAYS_REVERSE_MAP[dayOfWeek]} nu este în intervalul disponibil: ${availTimes}`
+          message: `Ora ${currentHour.toString().padStart(2, '0')}:${currentMinute.toString().padStart(2, '0')} ${DAYS_REVERSE_MAP[dayOfWeek]} nu este în intervalul disponibil: ${availTimes}`
         };
       }
 
-      if (currentDate.toDateString() === checkOut.toDateString()) {
-        const endHour = checkOut.getHours();
-        const endMinute = checkOut.getMinutes();
-        const endCurrentMinutes = endHour * 60 + endMinute;
-
-        let isEndTimeValid = false;
-        for (const avail of dayAvailability) {
-          const startMinutes = avail.startHour * 60 + avail.startMinute;
-          const endMinutes = avail.endHour * 60 + avail.endMinute;
-
-          if (endCurrentMinutes <= endMinutes && endCurrentMinutes > startMinutes) {
-            isEndTimeValid = true;
-            break;
-          }
-        }
-
-        if (!isEndTimeValid) {
-          const availTimes = dayAvailability.map(a =>
-            `${a.startHour.toString().padStart(2, '0')}:${a.startMinute.toString().padStart(2, '0')}-${a.endHour.toString().padStart(2, '0')}:${a.endMinute.toString().padStart(2, '0')}`
-          ).join(', ');
-
-          return {
-            isValid: false,
-            message: `Ora de sfârșit ${endHour.toString().padStart(2, '0')}:${endMinute.toString().padStart(2, '0')} ${DAYS_REVERSE_MAP[dayOfWeek]} nu este în intervalul disponibil: ${availTimes}`
-          };
-        }
-      }
-
-      currentDate.setDate(currentDate.getDate() + 1);
-      currentDate.setHours(0, 0, 0, 0);
+      currentDate = currentDate.plus({ days: 1 });
     }
 
     return { isValid: true };
