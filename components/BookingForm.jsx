@@ -14,18 +14,11 @@ const BookingForm = ({ room }) => {
   const [userTimezone, setUserTimezone] = useState('');
 
   useEffect(() => {
-    // ✅ Detectează fusul orar al utilizatorului
     const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
     setUserTimezone(timezone);
 
     const now = DateTime.now().setZone(timezone);
-    const minDateTimeString = now.toFormat("yyyy-MM-dd'T'HH:mm");
-    setMinDateTime(minDateTimeString);
-
-    console.log('=== BOOKING FORM INIT ===');
-    console.log('User timezone:', timezone);
-    console.log('Now (user tz):', now.toISO());
-    console.log('Min datetime for input:', minDateTimeString);
+    setMinDateTime(now.toFormat("yyyy-MM-dd'T'HH:mm"));
   }, []);
 
   useEffect(() => {
@@ -37,55 +30,41 @@ const BookingForm = ({ room }) => {
   }, [state, router]);
 
   const handleSubmit = (formData) => {
-    const checkInDateTime = formData.get('check_in_datetime');
-    const checkOutDateTime = formData.get('check_out_datetime');
+    const checkInISO = formData.get('check_in_datetime');
+    const checkOutISO = formData.get('check_out_datetime');
 
-    if (!checkInDateTime || !checkOutDateTime) {
+    if (!checkInISO || !checkOutISO) {
       toast.error('Vă rugăm să completați toate câmpurile');
       return;
     }
 
-    // ✅ Parsează în fusul utilizatorului
-    const checkIn = DateTime.fromISO(checkInDateTime, { zone: userTimezone });
-    const checkOut = DateTime.fromISO(checkOutDateTime, { zone: userTimezone });
+    // Parse input în fusul userului
+    const checkInLocal = DateTime.fromISO(checkInISO, { zone: userTimezone });
+    const checkOutLocal = DateTime.fromISO(checkOutISO, { zone: userTimezone });
     const now = DateTime.now().setZone(userTimezone);
 
-    console.log('=== FORM VALIDATION DEBUG ===');
-    console.log('Check-in (user tz):', checkIn.toISO());
-    console.log('Check-out (user tz):', checkOut.toISO());
-    console.log('Now (user tz):', now.toISO());
-
-    // Validări
-    if (!checkIn.isValid || !checkOut.isValid) {
+    if (!checkInLocal.isValid || !checkOutLocal.isValid) {
       toast.error('Date invalide');
       return;
     }
-    if (checkIn < now) {
+    if (checkInLocal < now) {
       toast.error('Check-in nu poate fi în trecut');
       return;
     }
-    if (checkOut <= checkIn) {
+    if (checkOutLocal <= checkInLocal) {
       toast.error('Check-out trebuie să fie după check-in');
       return;
     }
-    if (checkOut.diff(checkIn, 'minutes').minutes < 30) {
+    if (checkOutLocal.diff(checkInLocal, 'minutes').minutes < 30) {
       toast.error('Rezervarea trebuie să fie de cel puțin 30 de minute');
       return;
     }
 
-    // ✅ Pentru server: trimitem separat datele și ora + timezone
+    // Convertim la UTC pentru server
     const serverFormData = new FormData();
     serverFormData.append('room_id', room.$id);
-    serverFormData.append('check_in_date', checkIn.toFormat('yyyy-MM-dd'));
-    serverFormData.append('check_in_time', checkIn.toFormat('HH:mm'));
-    serverFormData.append('check_out_date', checkOut.toFormat('yyyy-MM-dd'));
-    serverFormData.append('check_out_time', checkOut.toFormat('HH:mm'));
-    serverFormData.append('user_timezone', userTimezone);
-
-    console.log('=== SENDING TO SERVER ===');
-    console.log('User timezone:', userTimezone);
-    console.log('Check-in (UTC):', checkIn.toUTC().toISO());
-    console.log('Check-out (UTC):', checkOut.toUTC().toISO());
+    serverFormData.append('check_in', checkInLocal.toUTC().toISO());
+    serverFormData.append('check_out', checkOutLocal.toUTC().toISO());
 
     formAction(serverFormData);
   };
@@ -103,13 +82,13 @@ const BookingForm = ({ room }) => {
         </div>
       )}
 
-      <form action={handleSubmit} className='mt-4'>
+      <form onSubmit={(e) => { e.preventDefault(); handleSubmit(new FormData(e.target)); }} className='mt-4'>
         <input type='hidden' name='room_id' value={room.$id} />
 
         <div className='grid grid-cols-1 sm:grid-cols-2 gap-6'>
           <div>
             <label htmlFor='check_in_datetime' className='block text-sm font-medium text-gray-700 mb-2'>
-              Data și ora de începere
+              Data și ora de început
             </label>
             <input
               type='datetime-local'
