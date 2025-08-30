@@ -19,6 +19,8 @@ const MyReservationsPage = async () => {
   // ✅ Sortăm rezervările expirate după check-out DESC (cele mai recente primele)  
   const sortedPast = past.sort((a, b) => new Date(b.check_out) - new Date(a.check_out));
 
+
+
   return (
     <>
       <Heading title='Rezervări pentru sălile mele' />
@@ -69,40 +71,72 @@ const MyReservationsPage = async () => {
           
           {sortedPast.length > 0 ? (
             <div className="space-y-3">
-              {sortedPast.map((booking, index) => (
-                <div key={booking.$id} className="relative">
-                  {/* Marcator pentru cea mai recentă rezervare */}
-                  {index === 0 && (
-                    <div className="absolute -left-2 -top-2 bg-purple-500 text-white text-xs px-2 py-1 rounded-full z-10">
-                      Cea mai recentă
-                    </div>
-                  )}
+              {sortedPast.map((booking, index) => {
+                const currentBookingDate = new Date(booking.check_out);
+                const daysDiff = Math.floor((now - currentBookingDate) / (1000 * 60 * 60 * 24));
+                
+                // Determinăm grupa curentă
+                const getTimeGroup = (days) => {
+                  if (days > 30) return 'month';
+                  if (days > 7) return 'week';
+                  return 'recent';
+                };
+                
+                const currentGroup = getTimeGroup(daysDiff);
+                
+                // Verificăm dacă trebuie să afișăm separator
+                let showSeparator = false;
+                let separatorText = '';
+                
+                if (index === 0) {
+                  // Prima rezervare - afișăm separator dacă nu e recentă
+                  if (currentGroup === 'month') {
+                    showSeparator = true;
+                    separatorText = '📅 Cu mai mult de o lună în urmă';
+                  } else if (currentGroup === 'week') {
+                    showSeparator = true;
+                    separatorText = '📆 Cu mai mult de o săptămână în urmă';
+                  }
+                } else {
+                  // Comparăm cu rezervarea anterioară
+                  const prevBooking = sortedPast[index - 1];
+                  const prevDate = new Date(prevBooking.check_out);
+                  const prevDaysDiff = Math.floor((now - prevDate) / (1000 * 60 * 60 * 24));
+                  const prevGroup = getTimeGroup(prevDaysDiff);
                   
-                  {/* Separator temporal pentru rezervări mai vechi de o săptămână */}
-                  {index > 0 && (
-                    (() => {
-                      const currentBookingDate = new Date(booking.check_out);
-                      const previousBookingDate = new Date(sortedPast[index - 1].check_out);
-                      const daysDiff = Math.floor((previousBookingDate - currentBookingDate) / (1000 * 60 * 60 * 24));
-                      
-                      if (daysDiff > 7) {
-                        return (
-                          <div className="flex items-center my-4">
-                            <div className="flex-grow border-t border-gray-300"></div>
-                            <div className="mx-4 text-sm text-gray-500 bg-white px-3 py-1 rounded-full border">
-                              Cu mai mult de o săptămână în urmă
-                            </div>
-                            <div className="flex-grow border-t border-gray-300"></div>
-                          </div>
-                        );
-                      }
-                      return null;
-                    })()
-                  )}
-                  
-                  <ReservedRoomCard booking={booking} />
-                </div>
-              ))}
+                  // Afișăm separator doar la schimbarea de grupă
+                  if (currentGroup !== prevGroup && currentGroup !== 'recent') {
+                    showSeparator = true;
+                    separatorText = currentGroup === 'month' 
+                      ? '📅 Cu mai mult de o lună în urmă'
+                      : '📆 Cu mai mult de o săptămână în urmă';
+                  }
+                }
+                
+                return (
+                  <div key={booking.$id} className="relative">
+                    {/* Marcator pentru cea mai recentă rezervare */}
+                    {index === 0 && (
+                      <div className="absolute -left-2 -top-2 bg-purple-500 text-white text-xs px-2 py-1 rounded-full z-10">
+                        Cea mai recentă
+                      </div>
+                    )}
+                    
+                    {/* Separator temporal */}
+                    {showSeparator && (
+                      <div className="flex items-center my-4">
+                        <div className="flex-grow border-t border-gray-300"></div>
+                        <div className="mx-4 text-sm text-gray-500 bg-white px-3 py-1 rounded-full border">
+                          {separatorText}
+                        </div>
+                        <div className="flex-grow border-t border-gray-300"></div>
+                      </div>
+                    )}
+                    
+                    <ReservedRoomCard booking={booking} />
+                  </div>
+                );
+              })}
             </div>
           ) : (
             <div className="bg-gray-50 border border-gray-200 rounded-lg p-6 text-center">
